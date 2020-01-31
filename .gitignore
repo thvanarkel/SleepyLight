@@ -1,3 +1,7 @@
 
 Code/SleepLight/arduino_secrets.h
 Hardware/~$Base.SLDPRT
+Hardware/~$Core.SLDPRT
+Hardware/~$Lamp.SLDASM
+Hardware/~$LED ring.SLDPRT
+Hardware/~$PCB holder.SLDPRT
