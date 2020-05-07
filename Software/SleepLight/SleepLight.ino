@@ -1,8 +1,4 @@
 #include <WiFiNINA.h>
-#include <RTCZero.h>
-
-RTCZero rtc;
-const int GMT = 1;
 
 #include "arduino_secrets.h">
 char ssid[] = SECRET_SSID;
@@ -32,32 +28,10 @@ void setup() {
   }
   printWiFiStatus();
 
-  unsigned long epoch;
-  int numberOfTries = 0, maxTries = 6;
-  do {
-    epoch = WiFi.getTime();
-    Serial.println(epoch);
-    numberOfTries++;
-  }
-  while ((epoch == 0) && (numberOfTries < maxTries));
-
-  if (numberOfTries == maxTries) {
-    Serial.print("NTP unreachable!!");
-    while (1);
-  }
-  else {
-    Serial.print("Epoch received: ");
-    Serial.println(epoch);
-    rtc.setEpoch(epoch);
-
-    Serial.println();
-  }
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  printDate();
-  printTime();
   Serial.println();
   delay(1000);
   updateStateMachine();
@@ -79,27 +53,6 @@ void updateStateMachine() {
   }
 }
 
-void printTime()
-{
-  print2digits(rtc.getHours() + GMT);
-  Serial.print(":");
-  print2digits(rtc.getMinutes());
-  Serial.print(":");
-  print2digits(rtc.getSeconds());
-  Serial.println();
-}
-
-void printDate()
-{
-  Serial.print(rtc.getDay());
-  Serial.print("/");
-  Serial.print(rtc.getMonth());
-  Serial.print("/");
-  Serial.print(rtc.getYear());
-
-  Serial.print(" ");
-}
-
 void printWiFiStatus() {
   // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
@@ -115,11 +68,4 @@ void printWiFiStatus() {
   Serial.print("signal strength (RSSI):");
   Serial.print(rssi);
   Serial.println(" dBm");
-}
-
-void print2digits(int number) {
-  if (number < 10) {
-    Serial.print("0");
-  }
-  Serial.print(number);
 }
