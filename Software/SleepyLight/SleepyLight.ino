@@ -1,3 +1,4 @@
+#include <ArduinoOTA.h>
 #include <WiFiNINA.h>
 
 #include "arduino_secrets.h">
