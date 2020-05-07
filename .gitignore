@@ -7,3 +7,4 @@ Hardware/~$LED ring.SLDPRT
 Hardware/~$PCB holder.SLDPRT
 Hardware/~$Spool fixture.sldprt
 Hardware/~$Spool fixture2.sldprt
+Software/SleepyLight/arduino_secrets.h
