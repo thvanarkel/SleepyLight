@@ -34,6 +34,8 @@ void setup() {
   strip.show();            // Turn OFF all pixels ASAP
   strip.setBrightness(50); // Set BRIGHTNESS to about 1/5 (max = 255)
 
+  programUploaded();
+
   while (status != WL_CONNECTED) {
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid, pass);
@@ -117,5 +119,14 @@ void rainbow(int wait) {
     hue += 256;
   } else {
     hue = 0;
+  }
+}
+
+void programUploaded() {
+  for (int i = 0; i < LED_COUNT; i++) {
+    strip.setPixelColor(i, 200, 255, 150);
+    strip.show();
+    delay(250);
+    strip.setPixelColor(i, 0, 0, 0);
   }
 }
