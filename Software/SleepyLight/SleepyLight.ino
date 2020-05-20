@@ -8,10 +8,15 @@ char pass[] = SECRET_PASS;
 
 int status = WL_IDLE_STATUS;
 
-#define LED_PIN    6
-#define LED_COUNT 50
+#include <FastLED.h>
 
-Lamp lamp(LED_PIN, 5, 10);
+#define LED_TYPE WS2812
+#define DATA_PIN 6
+#define NUM_LEDS 50
+
+
+
+Lamp lamp(5, 10);
 
 unsigned long rainbowUpdate = 0;
 long hue = 0;
@@ -32,6 +37,8 @@ void setup() {
 
   programUploaded();
 
+
+
   while (status != WL_CONNECTED) {
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid, pass);
@@ -48,8 +55,12 @@ void setup() {
 
 void loop() {
   ArduinoOTA.poll();
+  lamp.tick();
 
   // rainbow(10);
+  // if (millis() > 20000) {
+  //   lamp.turnOff();
+  // }
 
   updateStateMachine();
 }
@@ -125,5 +136,6 @@ void programUploaded() {
   //   delay(250);
   //   strip.setPixelColor(i, 0, 0, 0);
   // }
-  lamp.turnOn();
+  // lamp.turnOn();
+  // lamp.turnOff();
 }

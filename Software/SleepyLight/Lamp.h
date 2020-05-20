@@ -2,17 +2,23 @@
 #define Lamp_h
 
 #include "Arduino.h"
-#include <Adafruit_NeoPixel.h>
+#include <FastLED.h>
 
 class Lamp {
   public:
-    Lamp(int pin, int numSides, int ledsPerSide);
+    Lamp(int numSides, int ledsPerSide);
+    void tick();
     void turnOn();
+    void turnOff();
   private:
-    int _pin;
     int _numSides;
     int _ledsPerSide;
-    Adafruit_NeoPixel strip;
+    int _updateFrequency = 1000;
+    unsigned long _lastUpdate;
+    int hue;
+    int pos;
+    CRGB * leds;
+
 };
 
 #endif
