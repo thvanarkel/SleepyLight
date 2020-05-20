@@ -10,20 +10,30 @@ Lamp::Lamp(int numSides, int ledsPerSide)
 
   leds = new CRGB[nLeds];
   LEDS.addLeds<WS2812,6,GRB>(leds,(_numSides * _ledsPerSide));
-  LEDS.setBrightness(255);
+  LEDS.setBrightness(85);
+  FastLED.setTemperature(0xFF9329);
+  FastLED.clear();
 }
 
 void Lamp::tick() {
   if (millis() - _lastUpdate > _updateFrequency) {
-    for(int i = 0; i < (_numSides * _ledsPerSide); i++) {
-		  leds[i] = CHSV(20, quadwave8(pos), quadwave8(pos));
-      leds[i] = CHSV(20, 255 - pos, 255);
-	  }
+    if (level < toLevel) {
+      level += 2;
+      level = constrain(level, 0, 1023);
+    }
+
+    for (int i = 0; i < _ledsPerSide; i++) {
+      // mapLEDs(i, 20, 150, (beatsin8(5, 0, 255, 0, i * 5)));
+      int v = level - i * ((sin8(level >> 2))/10);
+      Serial.print(v);
+      Serial.print(" ");
+      mapLEDs(i, 20, 150, (v >> 2));
+    }
+    Serial.println();
+
+
     FastLED.show();
     pos++;
-    if (pos % 255 == 0) {
-      hue += 5;
-    }
     _lastUpdate = millis();
   }
 
@@ -32,9 +42,18 @@ void Lamp::tick() {
 void Lamp::turnOn()
 {
   // brightness = 255;
+  toLevel = 1023;
 }
 
 void Lamp::turnOff()
 {
   // brightness = 0;
+}
+
+void Lamp::mapLEDs(int i, int h, int s, int v)
+{
+  for(int n = 0; n < _numSides; n++) {
+    int index = n % 2 ? (n * _ledsPerSide) + ((_ledsPerSide - 1) - i) : (n * _ledsPerSide) + i;
+    leds[index] = CHSV(h, s, constrain(v, 0, 255));
+  }
 }

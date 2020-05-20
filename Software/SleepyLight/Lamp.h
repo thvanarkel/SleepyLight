@@ -13,11 +13,14 @@ class Lamp {
   private:
     int _numSides;
     int _ledsPerSide;
-    int _updateFrequency = 1000;
+    int _updateFrequency = 10;
     unsigned long _lastUpdate;
-    int hue;
     int pos;
+    int level;
+    int toLevel;
     CRGB * leds;
+
+    void mapLEDs(int i, int h, int s, int v);
 
 };
 

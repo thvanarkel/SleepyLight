@@ -37,8 +37,6 @@ void setup() {
 
   programUploaded();
 
-
-
   while (status != WL_CONNECTED) {
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid, pass);
@@ -136,6 +134,6 @@ void programUploaded() {
   //   delay(250);
   //   strip.setPixelColor(i, 0, 0, 0);
   // }
-  // lamp.turnOn();
+  lamp.turnOn();
   // lamp.turnOff();
 }
