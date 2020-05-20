@@ -1,6 +1,7 @@
 #include <WiFiNINA.h>
 #include <ArduinoOTA.h>
 #include "Lamp.h"
+#include <MQTT.h>
 
 #include "arduino_secrets.h">
 char ssid[] = SECRET_SSID;
@@ -14,7 +15,8 @@ int status = WL_IDLE_STATUS;
 #define DATA_PIN 6
 #define NUM_LEDS 50
 
-
+WiFiClient net;
+MQTTClient client;
 
 Lamp lamp(5, 10);
 
@@ -40,15 +42,38 @@ void setup() {
   while (status != WL_CONNECTED) {
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid, pass);
+
     // wait 10 seconds for connection:
     Serial.print(".");
     delay(1000);
   }
+  client.begin("broker.shiftr.io", net);
+  connect();
 
   ArduinoOTA.begin(WiFi.localIP(), "Arduino", "password", InternalStorage);
 
   printWiFiStatus();
 
+}
+
+void connect(boolean networkReconnect, boolean brokerReconnect) {
+  Serial.print("checking wifi...");
+  int ticks;
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    ticks++;
+    delay(1000);
+    if (ticks > 5) {
+      WiFi.begin(ssid, pass);
+      ticks = 0;
+    }
+  }
+  Serial.print("\nconnecting...");
+  while (!client.connect("SleepyLight", "4930afd9", "a7f2cc0b2ba3de3f")) {
+    Serial.print(".");
+    delay(1000);
+  }
+  Serial.println("\nconnected!");
 }
 
 void loop() {
