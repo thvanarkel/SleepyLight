@@ -19,8 +19,10 @@ void Lamp::tick() {
   if (millis() - _lastUpdate > _updateFrequency) {
     if (level < toLevel) {
       level += 2;
-      level = constrain(level, 0, 1023);
+    } else if (level > toLevel) {
+      level -= 2;
     }
+    level = constrain(level, 0, 1023);
 
     for (int i = 0; i < _ledsPerSide; i++) {
       // mapLEDs(i, 20, 150, (beatsin8(5, 0, 255, 0, i * 5)));
@@ -48,6 +50,7 @@ void Lamp::turnOn()
 void Lamp::turnOff()
 {
   // brightness = 0;
+  toLevel = 0;
 }
 
 void Lamp::mapLEDs(int i, int h, int s, int v)
