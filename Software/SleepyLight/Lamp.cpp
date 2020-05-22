@@ -10,7 +10,7 @@ Lamp::Lamp(int numSides, int ledsPerSide)
 
   leds = new CRGB[nLeds];
   LEDS.addLeds<WS2812,6,GRB>(leds,(_numSides * _ledsPerSide));
-  LEDS.setBrightness(85);
+  LEDS.setBrightness(10);
   FastLED.setTemperature(0xFF9329);
   FastLED.clear();
 }
@@ -27,18 +27,13 @@ void Lamp::tick() {
     for (int i = 0; i < _ledsPerSide; i++) {
       // mapLEDs(i, 20, 150, (beatsin8(5, 0, 255, 0, i * 5)));
       int v = level - i * ((sin8(level >> 2))/10);
-      Serial.print(v);
-      Serial.print(" ");
-      mapLEDs(i, 20, 150, (v >> 2));
+      mapLEDs(i, 20, 75, (v >> 2));
     }
-    Serial.println();
-
 
     FastLED.show();
     pos++;
     _lastUpdate = millis();
   }
-
 }
 
 void Lamp::turnOn()
