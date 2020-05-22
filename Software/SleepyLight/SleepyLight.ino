@@ -7,6 +7,7 @@
 
 #include <Wire.h>
 #include "ds3231.h"
+#include "RTClib.h"
 
 #include "arduino_secrets.h">
 char ssid[] = SECRET_SSID;
@@ -25,7 +26,11 @@ bool turnedOn = false;
 WiFiClient net;
 MQTTClient client;
 
-Lamp lamp(5, 10);
+RTC_DS3231 rtc;
+
+Lamp lamp(1, 10);
+
+unsigned long lastUpdate;
 
 #define BUFF_MAX 256
 
@@ -53,16 +58,22 @@ void setup() {
   Serial.begin(115200);
   Serial.print("connecting");
 
+  lamp.orientedUpwards = true;
+
   // Initialise shutdown pin speaker
   pinMode(SHUTDOWN_PIN, OUTPUT);
   digitalWrite(SHUTDOWN_PIN, LOW);
 
   Wire.begin();
-  DS3231_init(DS3231_INTCN);
-  DS3231_clear_a2f();
-  set_next_alarm();
+  if (!rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+  }
 
-  
+  if (rtc.lostPower()) {
+    Serial.println("RTC lost power, let's set the time!");
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+  nextAlarm();
 
   if (!SD.begin()) {
     client.publish("/error", "SD initialization failed");
@@ -72,11 +83,13 @@ void setup() {
   if (!waveFile) {
     client.publish("/error", "wave file invalid");
   }
-  AudioOutI2S.volume(5);
+  AudioOutI2S.volume(60);
   if (!AudioOutI2S.canPlay(waveFile)) {
     client.publish("/error", "unable to play wave file using I2S!");
     while (1); // do nothing
   }
+
+
 
   while (status != WL_CONNECTED) {
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
@@ -115,33 +128,39 @@ void loop() {
   if (!AudioOutI2S.isPlaying()) {
     // playback has stopped
     digitalWrite(SHUTDOWN_PIN, LOW);
-    
-    client.loop();
+    client.loop(); // Doing this during I2S outputting sound willl drop connection
+  }
+  if (millis() - lastUpdate > 1000) {
+    client.publish("/ledLevel", String(lamp.level));
+    lastUpdate = millis();
   }
 
   char buff[BUFF_MAX];
-  unsigned long now = millis();
-  struct ts t;
-  if ((now - prev > interval)) {
-    DS3231_get(&t);
-     snprintf(buff, BUFF_MAX, "%d.%02d.%02d %02d:%02d:%02d", t.year, t.mon, t.mday, t.hour, t.min, t.sec);
-     client.publish("/time", buff);
-    if (DS3231_triggered_a2()) {
+  unsigned long n = millis();
+  if ((n - prev > interval)) {
+    DateTime now = rtc.now();
+
+      String time = String(now.day(), DEC) + "." + String(now.month(), DEC) + "." + String(now.year(), DEC) + ": " + String(now.hour(), DEC) + ":" + String(now.minute(), DEC) + ":" + String(now.second(), DEC);
+     // snprintf(buff, BUFF_MAX, "%d.%02d.%02d %02d:%02d:%02d", now.year, now.month, now.mday, now.hour, now.min, now.sec);
+     client.publish("/time", time);
+    if (rtc.alarmFired(1)) {
+        rtc.clearAlarm(1);
         client.publish("/event/alarm", "true");
+
         if (turnedOn) {
-          lamp.turnOff();
+          lamp.turnOff(50000);
         } else {
-          lamp.turnOn();
+          lamp.turnOn(1500);
         }
         turnedOn = !turnedOn;
-//        digitalWrite(SHUTDOWN_PIN, HIGH);
-//        AudioOutI2S.play(waveFile);
-        set_next_alarm();
+       // digitalWrite(SHUTDOWN_PIN, HIGH);
+       // AudioOutI2S.play(waveFile);
+       nextAlarm();
         // clear a2 alarm flag and let INT go into hi-z
-        DS3231_clear_a2f();
+        // DS3231_clear_a2f();
     }
 
-    prev = now;
+    prev = n;
   }
 
 //  updateStateMachine();
@@ -164,35 +183,15 @@ void updateStateMachine() {
 }
 
 void programUploaded() {
-  lamp.turnOn();
-  turnedOn = true;
+  // lamp.turnOn(3000);
+  // turnedOn = true;
 //  client.publish("/test", "test");
 }
 
-void set_next_alarm(void)
+void nextAlarm()
 {
-    struct ts t;
-    unsigned char wakeup_min;
+    DateTime now = rtc.now();
+    DateTime future(now + TimeSpan(0, 0, 1, 0));
 
-    DS3231_get(&t);
-
-    // calculate the minute when the next alarm will be triggered
-    wakeup_min = (t.min / sleep_period + 1) * sleep_period;
-    if (wakeup_min > 59) {
-        wakeup_min -= 60;
-    }
-
-    // flags define what calendar component to be checked against the current time in order
-    // to trigger the alarm
-    // A2M2 (minutes) (0 to enable, 1 to disable)
-    // A2M3 (hour)    (0 to enable, 1 to disable)
-    // A2M4 (day)     (0 to enable, 1 to disable)
-    // DY/DT          (dayofweek == 1/dayofmonth == 0)
-    uint8_t flags[4] = { 0, 1, 1, 1 };
-
-    // set Alarm2. only the minute is set since we ignore the hour and day component
-    DS3231_set_a2(wakeup_min, 0, 0, flags);
-
-    // activate Alarm2
-    DS3231_set_creg(DS3231_INTCN | DS3231_A2IE);
+    rtc.setAlarm1(future, DS3231_A1_Minute);
 }
