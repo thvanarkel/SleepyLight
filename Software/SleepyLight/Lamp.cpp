@@ -12,6 +12,7 @@ Lamp::Lamp(int numSides, int ledsPerSide)
   LEDS.addLeds<WS2812, 6, GRB>(leds, (_numSides * _ledsPerSide));
   FastLED.setBrightness(200);
   FastLED.setTemperature(0xFF9329);
+  FastLED.setDither( 0 );
   FastLED.clear();
   level = 0;
 }
@@ -24,7 +25,9 @@ void Lamp::tick() {
     for (int i = 0; i < _ledsPerSide; i++) {
       // mapLEDs(i, 20, 150, (beatsin8(5, 0, 255, 0, i * 5)));
       int v = 255 - (255 * exp(-(0.0008 * (i + 1)) * level)); // - i * ((sin8(level >> 2))/2);
-      mapLEDs(i, 20, 60 + 140 * exp( -0.005 * (level >> 2)), constrain(v, 0, 255));
+      mapLEDs(i, 20, 60 + 140 * exp( -0.005 * level), constrain(v, 0, 255));
+
+//      mapLEDs(1, 1, 1, 1);
     }
 
     FastLED.show();
@@ -61,6 +64,8 @@ void Lamp::mapLEDs(int i, int h, int s, int v)
     if (orientedUpwards == false) {
       index = n % 2 ? (n * _ledsPerSide) + ((_ledsPerSide - 1) - i) : (n * _ledsPerSide) + i;
     }
-    leds[index] = CHSV(h, s, constrain(v, 0, 255));
+    leds[index] = CHSV(20, 60, constrain(v, 0, 255));
+//    leds[index] = CHSV(20, 60, 200);
   }
+//    leds[i] = CHSV(20, 180, constrain(v, 0, 255));
 }
