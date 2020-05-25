@@ -115,7 +115,6 @@ class App extends React.Component {
             control={<Switch checked={this.state.turnedOn} onChange={this.handleChange} name="turnedOn" />}
             label="Light on?"
           />
-
           <TimePicker
             autoOk
             variant="static"

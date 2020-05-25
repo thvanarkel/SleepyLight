@@ -23,7 +23,7 @@ class Lamp {
   private:
     int _numSides;
     int _ledsPerSide;
-    int _updateFrequency = 9;
+    int _updateFrequency = 20;
     unsigned long _lastUpdate;
     int startLevel;
     int endLevel;
