@@ -3,7 +3,7 @@ import * as mqtt from 'react-paho-mqtt'
 let client;
 
 const init = () => {
-  client = mqtt.connect("broker.shiftr.io", Number(80), "configurator", _onConnectionLost, _onMessageArrived)
+  client = mqtt.connect("broker.shiftr.io", Number(443), "configurator", _onConnectionLost, _onMessageArrived)
 }
 
 const connect = (params) => {

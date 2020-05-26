@@ -35,7 +35,8 @@ class App extends React.Component {
     client.init(); // mqtt.connect(host, port, clientId, _onConnectionLost, _onMessageArrived)
     client.connect({
       userName: '4930afd9',
-      password: 'a7f2cc0b2ba3de3f'
+      password: 'a7f2cc0b2ba3de3f',
+      useSSL:true
     })
   }
 
@@ -44,7 +45,7 @@ class App extends React.Component {
 
   handleChange = (event) => {
     this.setState({ turnedOn: event.target.checked });
-    
+
   }
 
   handleDateChange = (event) => {
