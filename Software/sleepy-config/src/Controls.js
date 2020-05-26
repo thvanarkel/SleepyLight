@@ -6,6 +6,7 @@ import client from './mqttClient.js'
 
 export default function Controls() {
   const [on, setOn] = React.useState(false);
+  const [value, setValue] = React.useState(30);
 
   const turnOn = (e, v) => {
     setOn(v);
@@ -13,11 +14,15 @@ export default function Controls() {
   }
 
   return (
-    <div>
+    <div className="controls">
     <FormControlLabel
       control={<Switch checked={on} onChange={turnOn} name="turnedOn" />}
       label="Light on?"
     />
+    <Slider value={value}
+            onChange={(e, v) => { setValue(v); }}
+            onChangeCommitted={(e, v) => { client.publish("/slider", String(value)); }}
+            aria-labelledby="continuous-slider" />
     </div>
   )
 }

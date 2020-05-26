@@ -47,9 +47,10 @@ export default function Navigation() {
     <div>
       <BottomNavigation
         value={index}
-        onChange={setIndex}
+        onChange={(event, newValue) => {
+          if (newValue != 2) setIndex(newValue);
+        }}
         showLabels
-        // className={classes.root}
       >
       <BottomNavigationAction label="Bedtime" icon={<NightsStayIcon />} />
       <BottomNavigationAction label="Wake-up" icon={<WbSunnyIcon />} />

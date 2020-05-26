@@ -6,6 +6,8 @@ html {
 body {
     height: 100%;
     overflow: auto;
+    background: rgb(34,45,102);
+    background: linear-gradient(0deg, rgba(34,45,102,1) 40%, rgba(84,99,173,1) 100%);
 }
 
 .App {
@@ -30,8 +32,7 @@ body {
 }
 
 .screen {
-  background: rgb(34,45,102);
-  background: linear-gradient(0deg, rgba(34,45,102,1) 40%, rgba(84,99,173,1) 100%);
+
   /* min-height: 100vh; */
   display: flex;
   flex-direction: column;
@@ -43,9 +44,15 @@ body {
   flex: 1;
 }
 
-.MuiBottomNavigation-root button {
+.controls {
+  /* display: flex; */
+  padding: 30px;
+}
+
+.MuiBottomNavigation-root {
   /* align-self: flex-end; */
   /* background-color: #3068ad; */
+  padding-bottom: 20px;
 }
 
 .App-link {
