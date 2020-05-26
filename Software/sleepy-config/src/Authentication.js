@@ -61,7 +61,7 @@ export default function Authentication(props) {
   return(
     <div className="loginPage">
     <div className="login">
-      <h1>Welkom</h1>
+      <h1>Welcome!</h1>
       <p>Please provide the login credentials to connect to the lamp.</p>
       <form noValidate autoComplete="off">
         <TextField
