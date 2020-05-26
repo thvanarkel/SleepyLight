@@ -11,6 +11,11 @@ enum LampMode {
   COOLDOWN
 };
 
+enum Orientation {
+  UPWARD = 0,
+  DOWNWARD = 1
+};
+
 class Lamp {
   public:
     Lamp(int numSides, int ledsPerSide);
@@ -19,7 +24,7 @@ class Lamp {
     void turnOff(int t);
     int level;
     LampMode mode;
-    boolean orientedUpwards;
+    Orientation orientation = UPWARD;
   private:
     int _numSides;
     int _ledsPerSide;

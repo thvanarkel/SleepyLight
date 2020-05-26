@@ -61,7 +61,7 @@ void Lamp::mapLEDs(int i, int h, int s, int v)
 {
   for (int n = 0; n < _numSides; n++) {
     int index = n % 2 ? (n * _ledsPerSide) + i : (n * _ledsPerSide) + ((_ledsPerSide - 1) - i);
-    if (orientedUpwards == false) {
+    if (orientation == DOWNWARD) {
       index = n % 2 ? (n * _ledsPerSide) + ((_ledsPerSide - 1) - i) : (n * _ledsPerSide) + i;
     }
     leds[index] = CHSV(20, 60, constrain(v, 0, 255));
