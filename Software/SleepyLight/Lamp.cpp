@@ -22,12 +22,15 @@ void Lamp::tick() {
     _now = millis();
     level = map(_now, startTime, endTime, startLevel, endLevel);
     level = constrain(level, 0, 1023);
+    
     for (int i = 0; i < _ledsPerSide; i++) {
-      // mapLEDs(i, 20, 150, (beatsin8(5, 0, 255, 0, i * 5)));
-      int v = 255 - (255 * exp(-(0.0008 * (i + 1)) * level)); // - i * ((sin8(level >> 2))/2);
-      mapLEDs(i, 20, 60 + 140 * exp( -0.005 * level), constrain(v, 0, 255));
-
-//      mapLEDs(1, 1, 1, 1);
+//      int v = ((level/1023.0) * 255) - (80 * exp(-(0.00099 * (1.25 * i + 1)) * level));
+      float v = ((constrain(1.4 * (i + 1) * level, 0, 1023)/1023) * 255);
+      float s = (170 - (constrain((2.4 * level), 0, 1023)/1023 * 80));
+//      float v = (level/1023.0) * 255;
+//      mapLEDs(i, 20, 80 + 140 * exp( -0.005 * level), constrain(v, 0, 255));
+      mapLEDs(i, 20, constrain(s, 0, 255), constrain(v, 0, 255));
+       
     }
 
     FastLED.show();
@@ -57,6 +60,11 @@ void Lamp::turnOff(int t)
   endTime = now + t;
 }
 
+void Lamp::setLevel(int l) {
+  endTime = millis();
+  endLevel = l;
+}
+
 void Lamp::mapLEDs(int i, int h, int s, int v)
 {
   for (int n = 0; n < _numSides; n++) {
@@ -64,8 +72,6 @@ void Lamp::mapLEDs(int i, int h, int s, int v)
     if (orientation == DOWNWARD) {
       index = n % 2 ? (n * _ledsPerSide) + ((_ledsPerSide - 1) - i) : (n * _ledsPerSide) + i;
     }
-    leds[index] = CHSV(20, 60, constrain(v, 0, 255));
-//    leds[index] = CHSV(20, 60, 200);
+    leds[index] = CHSV(20, constrain(s, 0, 255) , constrain(v, 0, 255));
   }
-//    leds[i] = CHSV(20, 180, constrain(v, 0, 255));
 }

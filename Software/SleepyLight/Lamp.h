@@ -22,13 +22,14 @@ class Lamp {
     void tick();
     void turnOn(int t);
     void turnOff(int t);
+    void setLevel(int l);
     int level;
     LampMode mode;
     Orientation orientation = UPWARD;
   private:
     int _numSides;
     int _ledsPerSide;
-    int _updateFrequency = 20;
+    int _updateFrequency = 25;
     unsigned long _lastUpdate;
     int startLevel;
     int endLevel;

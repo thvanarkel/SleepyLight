@@ -139,6 +139,7 @@ void connect() {
 
   client.subscribe("/turnedOn");
   client.subscribe("/alarm");
+  client.subscribe("/ledLevel");
 }
 
 boolean disconnected = false;
@@ -152,23 +153,22 @@ void loop() {
   }
   client.loop();
 
-  if (!AudioOutI2S.isPlaying()) {
-    // playback has stopped
-    digitalWrite(SHUTDOWN_PIN, LOW);
-    // Doing this during I2S outputting sound willl drop connection
-  }
-  if (millis() - lastUpdate > 1000) {
-    client.publish("/ledLevel", String(lamp.level));
-    lastUpdate = millis();
-  }
+//  if (!AudioOutI2S.isPlaying()) {
+//    // playback has stopped
+//    digitalWrite(SHUTDOWN_PIN, LOW);
+//    // Doing this during I2S outputting sound willl drop connection
+////  }
+//  if (millis() - lastUpdate > 1000) {
+////    client.publish("/ledLevel", String(lamp.level));
+////    client.publish("/state", String(currentState));
+////    client.publish("/orientation", String(orientation));
+//    lastUpdate = millis();
+//  }
 
-  updateOrientation();
-
-  if (detectTurn(orientation)) {
-    Serial.println("Turn");
-    lamp.orientation = orientation;
-  }
-  detectMovement();
+//  updateOrientation();
+//
+//
+//  detectMovement();
 
 
   //  //
@@ -207,9 +207,20 @@ void loop() {
 void updateStateMachine() {
   switch (currentState) {
     case LIGHT_IDLE:
+//      if (detectTurn(orientation)) {
+//        lamp.orientation = orientation;
+//        lamp.turnOn(2000);
+//      }
+//      if (lamp.level >= 1023) {
+//        currentState = UNWINDING;
+//        lamp.turnOff(10000);
+//      }
       break;
 
     case UNWINDING:
+      if (lamp.level <= 0) {
+        currentState = LIGHT_IDLE;
+      }
       break;
 
     case SLEEPING:
@@ -260,12 +271,14 @@ void messageReceived(String &topic, String &payload) {
   Serial.println(topic);
   Serial.println(payload);
   if (topic.equals("/turnedOn")) {
-    if (payload.equals("true")) {
-      lamp.turnOn(3000);
-    } else if (payload.equals("false")) {
-      lamp.turnOff(3000);
+    if (payload.equals("true") && lamp.level <= 0) {
+      lamp.turnOn(2000);
+    } else if (payload.equals("false") && lamp.level >= 1023) {
+      lamp.turnOff(5 * 60 * 1000);
     }
   } else if (topic.equals("/alarm")) {
     setAlarm(payload);
+  } else if (topic.equals("/ledLevel")) {
+    lamp.setLevel(payload.toInt());
   }
 }

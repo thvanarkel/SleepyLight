@@ -54,7 +54,7 @@ void updateOrientation() {
 
   pitch = fusion.getPitch();
   roll = fusion.getRoll();
-  yaw = fusion.getYaw();\
+  yaw = fusion.getYaw();
 
 //  Serial.print(pitch - pPitch);
 //  Serial.print(" ");
