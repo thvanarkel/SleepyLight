@@ -1,4 +1,5 @@
 import * as mqtt from 'react-paho-mqtt'
+import os from 'os';
 
 let client;
 
@@ -8,11 +9,16 @@ const init = () => {
 
 const connect = (params) => {
   client.connect(params);
+  console.log(client);
 }
 
 const publish = (topic, payload) => {
   const msg = mqtt.parsePayload(topic, payload);
   client.send(msg);
+}
+
+const isConnected = () => {
+  return client.isConnected();
 }
 
 const _sendPayload = () => {
@@ -67,7 +73,7 @@ const mqttClient = {
   init,
   connect,
   publish,
-  _sendPayload,
+  isConnected,
   onConnect,
   onFailure,
   _onConnectionLost,

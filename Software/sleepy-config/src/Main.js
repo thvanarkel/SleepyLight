@@ -20,8 +20,6 @@ import Authentication from './Authentication.js'
 
 import { moment } from 'moment';
 
-import client from './mqttClient.js'
-
 
 
 class Main extends React.Component {
@@ -34,12 +32,6 @@ class Main extends React.Component {
       tab: 0,
       slider: 50
     }
-    client.init(); // mqtt.connect(host, port, clientId, _onConnectionLost, _onMessageArrived)
-    client.connect({
-      userName: '4930afd9',
-      password: 'a7f2cc0b2ba3de3f',
-      useSSL:true
-    })
   }
 
   // called when sending payload
@@ -56,7 +48,7 @@ class Main extends React.Component {
   }
 
   sendDate = (event) => {
-    client.publish("/alarm", this.state.alarm.format("HH:mm:ss"))
+    // client.publish("/alarm", this.state.alarm.format("HH:mm:ss"))
   }
 
   setTab = (value) => {

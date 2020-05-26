@@ -5,8 +5,6 @@ import { Button, Dialog, IconButton, TextField } from '@material-ui/core'
 
 import CloseIcon from '@material-ui/icons/Close';
 
-import client from './mqttClient.js'
-
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
@@ -31,6 +29,8 @@ export default function Authentication(props) {
   const [error, setError] = React.useState(false);
 
   React.useEffect(() => {
+    console.log(props.error)
+    setError(props.error)
     if (password && userName) {
       setValidated(true);
     } else {
@@ -38,24 +38,9 @@ export default function Authentication(props) {
     }
   })
 
-  const connect = () => {
-    client.connect({
-      userName: userName,
-      password: password,
-      onSuccess: connected,
-      onFailure: notConnected,
-      useSSL:true
-    })
-  }
-
-  const connected = () => {
-    console.log("connected");
-    props.onAuth(true);
-  }
-
-  const notConnected = (e) => {
-    console.log(e);
-    setError(true);
+  const send = () => {
+    setError(false);
+    props.onSend(userName, password)
   }
 
   return(
@@ -84,7 +69,7 @@ export default function Authentication(props) {
           variant="outlined"
           color="primary"
           disabled={!validated}
-          onClick={connect}>
+          onClick={send}>
           Connect
         </Button>
       </form>
