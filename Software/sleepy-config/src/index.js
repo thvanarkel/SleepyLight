@@ -7,12 +7,17 @@ import * as serviceWorker from './serviceWorker';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import MomentUtils from '@date-io/moment';
 
+import { ThemeProvider } from '@material-ui/core/styles'
+import theme from './theme'
+
 ReactDOM.render(
-  <React.StrictMode>
-    <MuiPickersUtilsProvider utils={MomentUtils}>
-      <App />
-    </MuiPickersUtilsProvider>
-  </React.StrictMode>,
+  // <React.StrictMode>
+    <ThemeProvider theme={theme}>
+      <MuiPickersUtilsProvider utils={MomentUtils}>
+        <App />
+      </MuiPickersUtilsProvider>
+    </ThemeProvider>,
+  // </React.StrictMode>
   document.getElementById('root')
 );
 

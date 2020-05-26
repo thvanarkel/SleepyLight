@@ -1,49 +1,76 @@
-import mqtt from 'mqtt';
-const broker = 'mqtt://4930afd9:a7f2cc0b2ba3de3f@broker.shiftr.io';
+import * as mqtt from 'react-paho-mqtt'
 
-function getClient(errorHandler) {
-  const client = mqtt.connect(broker, {
-    clientId: 'configurator'
-  });
-  client.stream.on('error', (err) => {
-    errorHandler(`Connection to ${broker} failed`);
-    client.end();
-  });
-  return client;
+let client;
+
+const init = () => {
+  client = mqtt.connect("broker.shiftr.io", Number(80), "configurator", _onConnectionLost, _onMessageArrived)
 }
 
-function subscribe(client, topic, errorHandler) {
-  const callBack = (err, granted) => {
-    if (err) {
-      errorHandler('Subscription request failed');
-    }
-  };
-  return client.subscribe(apiEndpoint + topic, callBack);
+const connect = (params) => {
+  client.connect(params);
 }
 
-function onMessage(client, callBack) {
-  client.on('message', (topic, message, packet) => {
-    callBack(JSON.parse(new TextDecoder('utf-8').decode(message)));
-  });
+const publish = (topic, payload) => {
+  const msg = mqtt.parsePayload(topic, payload);
+  client.send(msg);
 }
 
-function unsubscribe(client, topic) {
-  client.unsubscribe(apiEndpoint + topic);
+const _sendPayload = () => {
+  const payload = mqtt.parsePayload("Hello", "World"); // topic, payload
+  client.send(payload);
 }
 
-function publish(client, topic, message) {
-
+const onConnect = () => {
+  console.log("connected");
 }
 
-function closeConnection(client) {
-  client.end();
+const onFailure = (e) => {
+  console.log(e);
 }
 
-const mqttService = {
-  getClient,
-  subscribe,
-  onMessage,
-  unsubscribe,
-  closeConnection,
+// called when client lost connection
+const _onConnectionLost = responseObject => {
+  if (responseObject.errorCode !== 0) {
+    console.log("onConnectionLost: " + responseObject.errorMessage);
+  }
+}
+
+// called when messages arrived
+const _onMessageArrived = message => {
+  console.log("onMessageArrived: " + message.payloadString);
+}
+
+// // called when subscribing topic(s)
+// _onSubscribe = () => {
+//   this.client.connect({ userName: '4930afd9',
+//     password: 'a7f2cc0b2ba3de3f',
+//   //   onSuccess: () => {
+//   //   // for (var i = 0; i < _topic.length; i++) {
+//   //   //   this.client.subscribe(_topic[i], _options);
+//   //   // }}
+//   // }); // called when the client connects
+// }
+
+// // called when subscribing topic(s)
+// _onUnsubscribe = () => {
+//   for (var i = 0; i < _topic.length; i++) {
+//     this.client.unsubscribe(_topic[i], _options);
+//   }
+// }
+
+// called when disconnecting the client
+const _onDisconnect = () => {
+  client.disconnect();
+}
+
+const mqttClient = {
+  init,
+  connect,
+  publish,
+  _sendPayload,
+  onConnect,
+  onFailure,
+  _onConnectionLost,
+  _onMessageArrived,
 };
-export default mqttService;
+export default mqttClient;

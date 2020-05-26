@@ -2,99 +2,50 @@ import React from 'react';
 import logo from './logo.svg';
 import './App.css';
 
-import { Button, FormControlLabel, Switch } from '@material-ui/core';
+import { Button,
+         FormControlLabel,
+         Switch,
+         Slider } from '@material-ui/core';
+
+import { BottomNavigation,
+         BottomNavigationAction } from '@material-ui/core'
+
+import NightsStayIcon from '@material-ui/icons/NightsStay';
+import WbSunnyIcon from '@material-ui/icons/WbSunny';
+import TuneIcon from '@material-ui/icons/Tune';
 
 import { TimePicker } from '@material-ui/pickers';
 
-import * as mqtt from 'react-paho-mqtt';
+import { withStyles } from "@material-ui/core/styles";
+
+
 
 import { moment } from 'moment';
 
-class App extends React.Component {
-  // const [ client, setClient ] = React.useState(null);
-  // const _topic = ["Hello"];
-  // const _options = {};
+import client from './mqttClient.js'
 
+class App extends React.Component {
   constructor() {
     super();
     this.state = {
       alarm: null,
-      turnedOn: false
+      turnedOn: false,
+      tab: 0,
+      slider: 50
     }
-    this.client = mqtt.connect("broker.shiftr.io", Number(80), "configurator", this._onConnectionLost, this._onMessageArrived); // mqtt.connect(host, port, clientId, _onConnectionLost, _onMessageArrived)
-    this.client.connect({
-      onSuccess: this.onConnect,
-      onFailure: this.onFailure,
+    client.init(); // mqtt.connect(host, port, clientId, _onConnectionLost, _onMessageArrived)
+    client.connect({
       userName: '4930afd9',
       password: 'a7f2cc0b2ba3de3f'
     })
   }
 
-  // const [state, setState] = React.useState({
-  //   turnedOn: false,
-  //   checkedB: true,
-  // });
-
-  // const [selectedDate, setDate] = React.useState(new Date());
-
-  // const _init = () => {
-  //
-  //   setClient(c);
-  //
-  // }
-
   // called when sending payload
-  _sendPayload = () => {
-    const payload = mqtt.parsePayload("Hello", "World"); // topic, payload
-    this.client.send(payload);
-  }
 
-  onConnect = () => {
-    console.log("connected");
-  }
-
-  onFailure = (e) => {
-    console.log(e);
-  }
-
-  // called when client lost connection
-  _onConnectionLost = responseObject => {
-    if (responseObject.errorCode !== 0) {
-      console.log("onConnectionLost: " + responseObject.errorMessage);
-    }
-  }
-
-  // called when messages arrived
-  _onMessageArrived = message => {
-    console.log("onMessageArrived: " + message.payloadString);
-  }
-
-  // // called when subscribing topic(s)
-  // _onSubscribe = () => {
-  //   this.client.connect({ userName: '4930afd9',
-  //     password: 'a7f2cc0b2ba3de3f',
-  //   //   onSuccess: () => {
-  //   //   // for (var i = 0; i < _topic.length; i++) {
-  //   //   //   this.client.subscribe(_topic[i], _options);
-  //   //   // }}
-  //   // }); // called when the client connects
-  // }
-
-  // // called when subscribing topic(s)
-  // _onUnsubscribe = () => {
-  //   for (var i = 0; i < _topic.length; i++) {
-  //     this.client.unsubscribe(_topic[i], _options);
-  //   }
-  // }
-
-  // called when disconnecting the client
-  _onDisconnect = () => {
-    this.client.disconnect();
-  }
 
   handleChange = (event) => {
     this.setState({ turnedOn: event.target.checked });
-    this.client.publish("/turnedOn", String(event.target.checked));
+    client.publish("/turnedOn", String(event.target.checked));
   }
 
   handleDateChange = (event) => {
@@ -103,9 +54,12 @@ class App extends React.Component {
   }
 
   sendDate = (event) => {
-    this.client.publish("/alarm", this.state.alarm.format("HH:mm:ss"))
+    client.publish("/alarm", this.state.alarm.format("HH:mm:ss"))
   }
 
+  setTab = (value) => {
+    this.setState({tab: value});
+  }
 
   render() {
     return (
@@ -124,14 +78,36 @@ class App extends React.Component {
           />
           <Button
             variant="outlined"
-            color="primary"
+            color="secondary"
             disabled={!this.state.alarm}
             onClick={this.sendDate}>Set alarm</Button>
 
+          <Slider value={this.state.slider}
+                  onChange={(e, v) => { this.setState({slider: v})}}
+                  onChangeCommitted={(e, v) => { this.client.publish("/slider", String(this.state.slider)); }}
+                  aria-labelledby="continuous-slider" />
+
         </header>
+
+
+
+        <BottomNavigation
+          value={this.state.tab}
+          onChange={(event, newValue) => {
+            console.log(newValue);
+            this.setTab(newValue);
+          }}
+          showLabels
+          // className={classes.root}
+        >
+        <BottomNavigationAction label="Bedtime" icon={<NightsStayIcon />} />
+        <BottomNavigationAction label="Wake-up" icon={<WbSunnyIcon />} />
+        <BottomNavigationAction label="Controls" icon={<TuneIcon />} />
+        </BottomNavigation>
+
       </div>
     );
   }
 }
 
-export default App;
+export default App;//withStyles(styles)(App);

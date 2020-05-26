@@ -1,5 +1,9 @@
 .App {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   text-align: center;
+  min-height: 100vh;
 }
 
 .App-logo {
@@ -14,14 +18,21 @@
 }
 
 .App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  background: rgb(34,45,102);
+  background: linear-gradient(0deg, rgba(34,45,102,1) 40%, rgba(84,99,173,1) 100%);
+  /* min-height: 100vh; */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  flex: 1;
+}
+
+.MuiBottomNavigation-root button {
+  /* align-self: flex-end; */
+  /* background-color: #3068ad; */
 }
 
 .App-link {
