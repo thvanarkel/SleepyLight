@@ -15,10 +15,9 @@ import WbSunnyIcon from '@material-ui/icons/WbSunny';
 import TuneIcon from '@material-ui/icons/Tune';
 
 import { TimePicker } from '@material-ui/pickers';
-
 import { withStyles } from "@material-ui/core/styles";
 
-
+import Navigation from './Navigation.js'
 
 import { moment } from 'moment';
 
@@ -45,7 +44,7 @@ class App extends React.Component {
 
   handleChange = (event) => {
     this.setState({ turnedOn: event.target.checked });
-    client.publish("/turnedOn", String(event.target.checked));
+    
   }
 
   handleDateChange = (event) => {
@@ -64,11 +63,8 @@ class App extends React.Component {
   render() {
     return (
       <div className="App">
-        <header className="App-header">
-          <FormControlLabel
-            control={<Switch checked={this.state.turnedOn} onChange={this.handleChange} name="turnedOn" />}
-            label="Light on?"
-          />
+        <div className="screen">
+
           <TimePicker
             autoOk
             variant="static"
@@ -87,23 +83,12 @@ class App extends React.Component {
                   onChangeCommitted={(e, v) => { this.client.publish("/slider", String(this.state.slider)); }}
                   aria-labelledby="continuous-slider" />
 
-        </header>
+        </div>
+
+        <Navigation />
 
 
 
-        <BottomNavigation
-          value={this.state.tab}
-          onChange={(event, newValue) => {
-            console.log(newValue);
-            this.setTab(newValue);
-          }}
-          showLabels
-          // className={classes.root}
-        >
-        <BottomNavigationAction label="Bedtime" icon={<NightsStayIcon />} />
-        <BottomNavigationAction label="Wake-up" icon={<WbSunnyIcon />} />
-        <BottomNavigationAction label="Controls" icon={<TuneIcon />} />
-        </BottomNavigation>
 
       </div>
     );

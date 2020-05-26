@@ -1,9 +1,21 @@
+html {
+    overflow: hidden;
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    overflow: auto;
+}
+
 .App {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   text-align: center;
   min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .App-logo {
@@ -17,7 +29,7 @@
   }
 }
 
-.App-header {
+.screen {
   background: rgb(34,45,102);
   background: linear-gradient(0deg, rgba(34,45,102,1) 40%, rgba(84,99,173,1) 100%);
   /* min-height: 100vh; */
@@ -27,6 +39,7 @@
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  padding: 20px;
   flex: 1;
 }
 
