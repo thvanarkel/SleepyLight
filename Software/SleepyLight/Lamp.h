@@ -22,7 +22,8 @@ class Lamp {
     void tick();
     void turnOn(int t);
     void turnOff(int t);
-    void setLevel(int l);
+    void setLevel(int l, int t);
+    boolean inAnimation();
     int level;
     LampMode mode;
     Orientation orientation = UPWARD;

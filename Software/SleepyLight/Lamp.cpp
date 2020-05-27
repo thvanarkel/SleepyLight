@@ -20,8 +20,24 @@ Lamp::Lamp(int numSides, int ledsPerSide)
 void Lamp::tick() {
   if (millis() - _lastUpdate > _updateFrequency) {
     _now = millis();
+    _now = constrain(_now, startTime, endTime);
+
+    
+    
     level = map(_now, startTime, endTime, startLevel, endLevel);
     level = constrain(level, 0, 1023);
+
+    Serial.print(level);
+    Serial.print(": ");
+    Serial.print(_now);
+    Serial.print(" ");
+    Serial.print(startTime);
+    Serial.print(" ");
+    Serial.print(endTime);
+    Serial.print(" ");
+    Serial.print(startLevel);
+    Serial.print(" ");
+    Serial.println(endLevel);
     
     for (int i = 0; i < _ledsPerSide; i++) {
 //      int v = ((level/1023.0) * 255) - (80 * exp(-(0.00099 * (1.25 * i + 1)) * level));
@@ -41,8 +57,9 @@ void Lamp::tick() {
 void Lamp::turnOn(int t)
 {
   // brightness = 255;
-  startLevel = level;
+  startLevel = (level + 1);
   endLevel = 1023;
+  level += 1;
 
   unsigned long now = millis();
   startTime = now;
@@ -52,17 +69,26 @@ void Lamp::turnOn(int t)
 void Lamp::turnOff(int t)
 {
   // brightness = 0;
-  startLevel = level;
+  startLevel = (level - 1);
   endLevel = 0;
+  level -= 1;
 
   unsigned long now = millis();
   startTime = now;
   endTime = now + t;
 }
 
-void Lamp::setLevel(int l) {
-  endTime = millis();
+void Lamp::setLevel(int l, int t) {
+  startLevel = level;
   endLevel = l;
+
+  unsigned long now = millis();
+  startTime = now;
+  endTime = now + t;
+}
+
+boolean Lamp::inAnimation() {
+  return level != endLevel ? true : false;
 }
 
 void Lamp::mapLEDs(int i, int h, int s, int v)

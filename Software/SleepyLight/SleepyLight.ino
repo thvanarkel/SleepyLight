@@ -42,6 +42,9 @@ unsigned long prev = 5000, interval = 1000;
 // filename of wave file to play
 const char filename[] = "orbit.wav";
 
+int slumberIntensity = 75;
+int slumberDecay = 10000;
+
 
 struct Sound {
   char filename[14];
@@ -78,7 +81,8 @@ enum State {
   UNWINDING,
   SLEEPING,
   AWAKENING,
-  ALARMED
+  ALARMED,
+  SLUMBERING
 };
 
 State currentState = LIGHT_IDLE;
@@ -162,8 +166,8 @@ void connect() {
   Serial.println("\nconnected!");
 
   client.subscribe("/turnedOn");
-  client.subscribe("/alarm");
-  client.subscribe("/ledLevel");
+  client.subscribe("/wakeup/alarm");
+//  client.subscribe("/ledLevel");
 }
 
 boolean disconnected = false;
@@ -171,7 +175,7 @@ boolean disconnected = false;
 void loop() {
   ArduinoOTA.poll();
   lamp.tick();
-  Serial.println(lamp.level);
+//  Serial.println(lamp.level);
 
   if (!client.connected()) {
     connect();
@@ -189,12 +193,12 @@ void loop() {
     lastState = currentState;
   }
 
-//  if (millis() - lastUpdate > 1000) {
-//    client.publish("/ledLevel", String(lamp.level));
-//
-//    //    client.publish("/orientation", String(orientation));
-//    lastUpdate = millis();
-//  }
+  if (millis() - lastUpdate > 1000) {
+    client.publish("/ledLevel", String(lamp.level));
+
+    //    client.publish("/orientation", String(orientation));
+    lastUpdate = millis();
+  }
 
   updateOrientation();
   //
@@ -236,13 +240,17 @@ void loop() {
 }
 
 void updateStateMachine() {
+  Serial.println(currentState);
   switch (currentState) {
     case LIGHT_IDLE:
+      
+      // Check if the lamp is turned
       if (detectTurn(orientation)) {
         lamp.orientation = orientation;
         lamp.turnOn(2000);
         didTurn = true;
       }
+      // If the lamp is turned and fully on, transition to next state
       if (didTurn) {
         if (lamp.level >= 1023) {
           didTurn = false;
@@ -250,8 +258,7 @@ void updateStateMachine() {
           lamp.turnOff(10000);
         }
       }
-
-
+      // Check if the wake-up alarm has fired
       if (rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
         DateTime now = rtc.now();
@@ -259,6 +266,12 @@ void updateStateMachine() {
         rtc.setAlarm1(future, DS3231_A1_Hour);
         lamp.turnOn(2 * 60 * 1000); // TODO: fix the times
         currentState = AWAKENING;
+      }
+
+      if (nShakes > 3) {
+        lamp.setLevel(slumberIntensity, 1500);
+        nShakes = 0;
+        currentState = SLUMBERING;
       }
 
       break;
@@ -294,15 +307,27 @@ void updateStateMachine() {
         lamp.turnOff(2000);
         currentState = LIGHT_IDLE;
       }
-      if (nShakes > 5) {
+      if (nShakes > 3) {
         stopSound();
         nShakes = 0;
         DateTime now = rtc.now();
-        DateTime future(now + TimeSpan(0, 0, 2, 0)); // TODO: fix the times
+        DateTime future(now + TimeSpan(0, 0, 1, 0)); // TODO: fix the times
         rtc.setAlarm1(future, DS3231_A1_Hour);
         currentState = AWAKENING;
       }
       break;
+
+    case SLUMBERING:
+      if (!lamp.inAnimation()) {
+        if (lamp.level >= slumberIntensity) {
+          lamp.turnOff(slumberDecay);
+        } else {
+          currentState = LIGHT_IDLE;
+        }
+      }
+      
+      break;
+      
   }
 }
 
@@ -327,7 +352,6 @@ String getValue(String data, char separator, int index)
       strIndex[1] = (i == maxIndex) ? i + 1 : i;
     }
   }
-
   return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
@@ -352,10 +376,10 @@ void messageReceived(String &topic, String &payload) {
     } else if (payload.equals("false") && lamp.level >= 1023) {
       lamp.turnOff(2000);
     }
-  } else if (topic.equals("/alarm")) {
+  } else if (topic.equals("/wakeup/alarm")) {
     setAlarm(payload);
   } else if (topic.equals("/ledLevel")) {
-    lamp.setLevel(payload.toInt());
+//    lamp.setLevel(payload.toInt(), millis());
   }
 }
 
@@ -367,7 +391,6 @@ void setSound(int index) {
       client.publish("/error", "wave file invalid");
     }
   }
-
 }
 
 void playSound(boolean looping) {
