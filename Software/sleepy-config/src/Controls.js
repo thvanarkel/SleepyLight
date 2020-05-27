@@ -6,12 +6,21 @@ import client from './mqttClient.js'
 
 export default function Controls() {
   const [on, setOn] = React.useState(false);
-  const [value, setValue] = React.useState(30);
+  const [value, setValue] = React.useState(0);
 
   const turnOn = (e, v) => {
     setOn(v);
-    client.publish("/turnedOn", String(on));
+    client.publish("/turnedOn", String(!on));
   }
+
+  // const callback = (topic, payload) => {
+  //   if (parseInt(payload) <= 0) {
+  //     setOn(false)
+  //   }
+  //   setValue(payload)
+  // }
+  //
+  // client.subscribe('/ledLevel', callback);
 
   return (
     <div className="controls">
@@ -20,9 +29,14 @@ export default function Controls() {
       label="Light on?"
     />
     <Slider value={value}
-            onChange={(e, v) => { setValue(v); }}
-            onChangeCommitted={(e, v) => { client.publish("/slider", String(value)); }}
-            aria-labelledby="continuous-slider" />
+            onChange={(e, v) => {
+              setValue(v);
+            }}
+            onChangeCommitted={(e, v) => { client.publish("/ledLevel", String(value)); }}
+            aria-labelledby="continuous-slider"
+            step={5}
+            min={0}
+            max={1023} />
     </div>
   )
 }

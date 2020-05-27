@@ -2,9 +2,10 @@ import * as mqtt from 'react-paho-mqtt'
 import os from 'os';
 
 let client;
+let callback;
 
 const init = () => {
-  client = mqtt.connect("broker.shiftr.io", Number(443), "configurator", _onConnectionLost, _onMessageArrived)
+  client = mqtt.connect("broker.shiftr.io", Number(443), "configurator", _onConnectionLost, onMessageArrived)
 }
 
 const connect = (params) => {
@@ -19,11 +20,6 @@ const publish = (topic, payload) => {
 
 const isConnected = () => {
   return client.isConnected();
-}
-
-const _sendPayload = () => {
-  const payload = mqtt.parsePayload("Hello", "World"); // topic, payload
-  client.send(payload);
 }
 
 const onConnect = () => {
@@ -42,20 +38,15 @@ const _onConnectionLost = responseObject => {
 }
 
 // called when messages arrived
-const _onMessageArrived = message => {
-  console.log("onMessageArrived: " + message.payloadString);
+const onMessageArrived = message => {
+  callback(message.destinationName, message.payloadString)
 }
 
 // // called when subscribing topic(s)
-// _onSubscribe = () => {
-//   this.client.connect({ userName: '4930afd9',
-//     password: 'a7f2cc0b2ba3de3f',
-//   //   onSuccess: () => {
-//   //   // for (var i = 0; i < _topic.length; i++) {
-//   //   //   this.client.subscribe(_topic[i], _options);
-//   //   // }}
-//   // }); // called when the client connects
-// }
+const subscribe = (topic, cb) => {
+  client.subscribe(topic);
+  callback = cb;
+}
 
 // // called when subscribing topic(s)
 // _onUnsubscribe = () => {
@@ -73,10 +64,11 @@ const mqttClient = {
   init,
   connect,
   publish,
+  subscribe,
   isConnected,
   onConnect,
   onFailure,
   _onConnectionLost,
-  _onMessageArrived,
+  onMessageArrived,
 };
 export default mqttClient;

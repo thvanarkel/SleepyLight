@@ -33,7 +33,6 @@ function App() {
     connect(u, p);
   }
 
-
   return authenticated ? <Main /> : <Authentication onSend={onSend} error={error} />
   // return <Main />
 }

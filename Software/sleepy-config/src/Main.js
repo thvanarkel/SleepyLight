@@ -4,19 +4,15 @@ import './App.css';
 
 import { Button } from '@material-ui/core';
 
-import { BottomNavigation,
-         BottomNavigationAction } from '@material-ui/core'
-
-import NightsStayIcon from '@material-ui/icons/NightsStay';
-import WbSunnyIcon from '@material-ui/icons/WbSunny';
-import TuneIcon from '@material-ui/icons/Tune';
-
 import { TimePicker } from '@material-ui/pickers';
 import { withStyles } from "@material-ui/core/styles";
 
-import Navigation from './Navigation.js'
+import Navigation from './Navigation'
 
-import Authentication from './Authentication.js'
+import PageHome from './PageHome.js'
+import PageBedtime from './PageBedtime.js'
+import PageWakeup from './PageWakeup.js'
+
 
 import { moment } from 'moment';
 
@@ -55,29 +51,31 @@ class Main extends React.Component {
     this.setState({tab: value});
   }
 
+  selectPage = (i) => {
+
+  }
+
 
   render() {
+    let page;
+    console.log(this.state.tab)
+    switch(this.state.tab) {
+      case 0:
+        page = <PageHome />;
+        break;
+      case 1:
+        page = <PageBedtime />;
+        break;
+      case 2:
+        page = <PageWakeup />;
+        break;
+    }
     return (
       <div className="App">
+        {page}
+        
 
-        <div className="screen">
-
-
-          <TimePicker
-            autoOk
-            variant="static"
-            openTo="hours"
-            value={this.state.alarm}
-            onChange={this.handleDateChange}
-          />
-          <Button
-            variant="outlined"
-            color="secondary"
-            disabled={!this.state.alarm}
-            onClick={this.sendDate}>Set alarm</Button>
-        </div>
-
-        <Navigation />
+        <Navigation setTab={this.setTab} />
       </div>
     );
   }
