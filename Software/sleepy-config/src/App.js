@@ -18,6 +18,12 @@ function App() {
     })
   }
 
+  React.useEffect(() => {
+    if (!client.isConnected()) {
+      setAuthenticated(false)
+    }
+  });
+
   const connected = () => {
     console.log("connected");
     setAuthenticated(true);

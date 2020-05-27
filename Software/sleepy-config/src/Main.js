@@ -58,7 +58,6 @@ class Main extends React.Component {
 
   render() {
     let page;
-    console.log(this.state.tab)
     switch(this.state.tab) {
       case 0:
         page = <PageHome />;
@@ -73,7 +72,7 @@ class Main extends React.Component {
     return (
       <div className="App">
         {page}
-        
+
 
         <Navigation setTab={this.setTab} />
       </div>

@@ -10,11 +10,17 @@ body {
     background: linear-gradient(0deg, rgba(34,45,102,1) 40%, rgba(84,99,173,1) 100%);
 }
 
+h1 {
+  margin: 0;
+  margin-bottom: 40px;
+  align-self: flex-start;
+}
+
 .App {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  text-align: center;
+  /* text-align: center; */
   min-height: 100vh;
   height: 100%;
   overflow: hidden;
@@ -37,11 +43,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* justify-content: center; */
   font-size: calc(10px + 2vmin);
   color: white;
   padding: 20px;
-  flex: 1;
 }
 
 .controls {
@@ -57,13 +62,4 @@ body {
 
 .App-link {
   color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
