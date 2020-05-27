@@ -17,8 +17,6 @@ char pass[] = SECRET_PASS;
 
 int status = WL_IDLE_STATUS;
 
-//#include <FastLED.h>
-
 #define LED_TYPE WS2812
 #define DATA_PIN 6
 #define NUM_LEDS 50
@@ -43,6 +41,25 @@ unsigned long prev = 5000, interval = 500;
 
 // filename of wave file to play
 const char filename[] = "orbit.wav";
+
+
+struct Sound {
+  char filename[14];
+  int duration;
+};
+
+static Sound sounds[8] = {{"birdsong.wav", 61},
+  {"bright.wav", 61},
+  {"droplets.wav", 61},
+  {"early.wav", 54},
+  {"helios.wav", 64},
+  {"orbit.wav", 64},
+  {"spring.wav", 70},
+  {"sunny.wav", 60}
+};
+
+int currentSound = 5;
+unsigned long startedPlaying;
 
 SDWaveFile waveFile;
 
@@ -83,7 +100,7 @@ void setup() {
   }
   client.begin("broker.shiftr.io", net);
   client.onMessage(messageReceived);
-    connect();
+  connect();
 
   // Initialise RTC
   Wire.begin();
@@ -155,9 +172,9 @@ void loop() {
   lamp.tick();
   Serial.println(lamp.level);
 
-    if (!client.connected()) {
-      connect();
-    }
+  if (!client.connected()) {
+    connect();
+  }
   client.loop();
 
   if (!AudioOutI2S.isPlaying()) {
@@ -173,7 +190,7 @@ void loop() {
 
   if (millis() - lastUpdate > 1000) {
     client.publish("/ledLevel", String(lamp.level));
-    
+
     //    client.publish("/orientation", String(orientation));
     lastUpdate = millis();
   }
@@ -333,4 +350,21 @@ void messageReceived(String &topic, String &payload) {
   } else if (topic.equals("/ledLevel")) {
     lamp.setLevel(payload.toInt());
   }
+}
+
+void setSound(int index) {
+  if (currentSound != index) {
+    currentSound = index;
+    waveFile = SDWaveFile(sounds[currentSound].filename);
+    if (!waveFile) {
+      client.publish("/error", "wave file invalid");
+    }
+  }
+
+}
+
+void playSound() {
+  digitalWrite(SHUTDOWN_PIN, HIGH);
+  AudioOutI2S.play(waveFile);
+  startedPlaying = millis();
 }
