@@ -6,7 +6,7 @@ float deltat;
 
 float pPitch, pRoll;
 
-#define TURN_THRESHOLD 80
+#define TURN_THRESHOLD 70
 
 boolean detectTurn(Orientation lastOrientation) {
   Orientation currentOrientation;

@@ -28,23 +28,29 @@ MQTTClient client;
 
 RTC_DS3231 rtc;
 
+char bedtimeDays[8] = "0111110";
+char wakeupDays[8] = "0111110";
+String bedtimeAlarm;
+String wakeupAlarm;
+
 Lamp lamp(5, 10);
-
 unsigned long lastUpdate;
-
-#define BUFF_MAX 256
 
 uint8_t sleep_period = 1;
 unsigned long prev = 5000, interval = 1000;
 
-#define SHUTDOWN_PIN 5
 
-// filename of wave file to play
-const char filename[] = "orbit.wav";
+// State parameters
 
 int slumberIntensity = 75;
 int slumberDecay = 10000;
 
+int awakePeriod = 2; // in minutes
+
+
+
+
+#define SHUTDOWN_PIN 5
 
 struct Sound {
   char filename[14];
@@ -123,7 +129,7 @@ void setup() {
     client.publish("/error", "SD initialization failed");
     //    return;
   }
-  waveFile = SDWaveFile(filename);
+  waveFile = SDWaveFile(sounds[currentSound].filename);
   if (!waveFile) {
     client.publish("/error", "wave file invalid");
   }
@@ -167,7 +173,10 @@ void connect() {
 
   client.subscribe("/turnedOn");
   client.subscribe("/wakeup/alarm");
-//  client.subscribe("/ledLevel");
+  client.subscribe("/wakeup/days");
+  client.subscribe("/bedtime/alarm");
+  client.subscribe("/bedtime/days");
+  //  client.subscribe("/ledLevel");
 }
 
 boolean disconnected = false;
@@ -175,7 +184,7 @@ boolean disconnected = false;
 void loop() {
   ArduinoOTA.poll();
   lamp.tick();
-//  Serial.println(lamp.level);
+  //  Serial.println(lamp.level);
 
   if (!client.connected()) {
     connect();
@@ -209,10 +218,7 @@ void loop() {
   unsigned long n = millis();
   if ((n - prev > interval)) {
     DateTime now = rtc.now();
-    //    //
-    String time = String(now.dayOfTheWeek(), DEC) + " " + String(now.day(), DEC) + "." + String(now.month(), DEC) + "." + String(now.year(), DEC) + ": " + String(now.hour(), DEC) + ":" + String(now.minute(), DEC) + ":" + String(now.second(), DEC);
-    //    //         // snprintf(buff, BUFF_MAX, "%d.%02d.%02d %02d:%02d:%02d", now.year, now.month, now.mday, now.hour, now.min, now.sec);
-    client.publish("/time", time);
+    publishDate("/time", now);
     //      if (rtc.alarmFired(1)) {
     //        rtc.clearAlarm(1);
     //        client.publish("/event/alarm", "true");
@@ -241,7 +247,7 @@ void updateStateMachine() {
   Serial.println(currentState);
   switch (currentState) {
     case LIGHT_IDLE:
-      
+
       // Check if the lamp is turned
       if (detectTurn(orientation)) {
         lamp.orientation = orientation;
@@ -266,7 +272,7 @@ void updateStateMachine() {
         currentState = AWAKENING;
       }
 
-      if (nShakes > 3) {
+      if (!lamp.inAnimation() && nShakes > 3) {
         lamp.setLevel(slumberIntensity, 1500);
         nShakes = 0;
         currentState = SLUMBERING;
@@ -303,6 +309,7 @@ void updateStateMachine() {
         stopSound();
         lamp.orientation = orientation;
         lamp.turnOff(2000);
+        nextAlarm(true);
         currentState = LIGHT_IDLE;
       }
       if (nShakes > 3) {
@@ -323,19 +330,12 @@ void updateStateMachine() {
           currentState = LIGHT_IDLE;
         }
       }
-      
+
       break;
-      
+
   }
 }
 
-void nextAlarm()
-{
-  DateTime now = rtc.now();
-  DateTime future(now + TimeSpan(0, 0, 1, 0));
-
-  rtc.setAlarm1(future, DS3231_A1_Minute);
-}
 
 String getValue(String data, char separator, int index)
 {
@@ -353,31 +353,103 @@ String getValue(String data, char separator, int index)
   return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
-void setAlarm(String str) {
+void setAlarm(String str, boolean wakeup) {
   //(year, month, day, hour, minute, second)
-  rtc.clearAlarm(1);
+  
+  int alarmIndex = wakeup ? 1 : 2;
+  rtc.clearAlarm(alarmIndex);
   DateTime now = rtc.now();
   DateTime a(now.year(), now.month(), now.day(), getValue(str, ':', 0).toInt(), getValue(str, ':', 1).toInt(), 0);
-  DateTime future = a - TimeSpan(0, 0, 2, 0);
-  rtc.setAlarm1(future, DS3231_A1_Hour);
-  char buffer[] = "hh:mm:ss";
-  String msg = future.toString(buffer);
-  client.publish("/light-alarm", msg);
+
+  if (now < a) {
+    // Still do the alarm today
+    char theDay = wakeup ? wakeupDays[now.dayOfTheWeek()] : bedtimeDays[now.dayOfTheWeek()];
+    if (theDay == '1') {
+      DateTime future = a - TimeSpan(0, 0, 2, 0);
+      if (wakeup) {
+        rtc.setAlarm1(future, DS3231_A1_Hour);
+        publishDate("/wakeup/alarm/time", future);
+      } else {
+        rtc.setAlarm2(future, DS3231_A2_Hour);
+        publishDate("/bedtime/alarm/time", future);
+      }
+    } else {
+      nextAlarm(wakeup);
+    }
+  } else {
+    // Schedule next alarm
+    nextAlarm(wakeup);
+  }
+
+
+  //  rtc.setAlarm1(future, DS3231_A1_Hour);
+
+  //  char buffer[] = "hh:mm:ss";
+  //  String msg = future.toString(buffer);
+  //  client.publish("/light-alarm", msg);
+}
+
+
+void nextAlarm(boolean wakeup)
+{
+  //  DateTime future(now + TimeSpan(0, 0, 1, 0));
+  //
+  //  rtc.setAlarm1(future, DS3231_A1_Minute);
+  DateTime now = rtc.now();
+  String str = wakeup ? wakeupAlarm : bedtimeAlarm;
+  DateTime a(now.year(), now.month(), now.day(), getValue(str, ':', 0).toInt(), getValue(str, ':', 1).toInt(), 0);
+  boolean foundNext = false;
+  int i = 1;
+  while(!foundNext) {
+    int index = now.dayOfTheWeek() + i > 6 ? now.dayOfTheWeek() + i - 7 : now.dayOfTheWeek() + i;
+    char d = wakeup ? wakeupDays[index] : bedtimeDays[index];  
+    if (d != '1') {
+      i++;
+    } else {
+      foundNext = true;
+      DateTime n = a + TimeSpan(i, 0, 0, 0);
+      DateTime future = n - TimeSpan(0, 0, awakePeriod, 0);
+      if (wakeup) {
+        rtc.setAlarm1(future, DS3231_A1_Hour);
+        publishDate("/wakeup/alarm/time", future);
+      } else {
+        rtc.setAlarm2(future, DS3231_A2_Hour);
+        publishDate("/bedtime/alarm/time", future);
+      }
+    }
+    if (i > 7) {
+      if (wakeup) {
+        int alarmIndex = wakeup ? 1 : 2;
+        rtc.clearAlarm(alarmIndex);
+      }
+      break; // No dates selected
+    }
+  }
+}
+
+void publishDate(String topic, DateTime date) {
+  String time = String(date.dayOfTheWeek(), DEC) + " " + String(date.day(), DEC) + "." + String(date.month(), DEC) + "." + String(date.year(), DEC) + ": " + String(date.hour(), DEC) + ":" + String(date.minute(), DEC) + ":" + String(date.second(), DEC);
+  //    //         // snprintf(buff, BUFF_MAX, "%d.%02d.%02d %02d:%02d:%02d", now.year, now.month, now.mday, now.hour, now.min, now.sec);
+  client.publish(topic, time);
 }
 
 void messageReceived(String &topic, String &payload) {
   Serial.println(topic);
   Serial.println(payload);
-  if (topic.equals("/turnedOn")) {
-    if (payload.equals("true") && lamp.level <= 0) {
-      lamp.turnOn(2000);
-    } else if (payload.equals("false") && lamp.level >= 1023) {
-      lamp.turnOff(2000);
-    }
+  if (payload.equals("true") && lamp.level <= 0) {
+    lamp.turnOn(2000);
+  } else if (payload.equals("false") && lamp.level >= 1023) {
+    lamp.turnOff(2000);
   } else if (topic.equals("/wakeup/alarm")) {
-    setAlarm(payload);
-  } else if (topic.equals("/ledLevel")) {
-//    lamp.setLevel(payload.toInt(), millis());
+    wakeupAlarm = payload;
+    setAlarm(payload, true);
+  } else if (topic.equals("/wakeup/days")) {
+    payload.toCharArray(wakeupDays, 8);
+  } else if (topic.equals("/bedtime/alarm")) {
+    bedtimeAlarm = payload;
+    setAlarm(payload, false);
+  } else if (topic.equals("/bedtime/days")) {
+    payload.toCharArray(bedtimeDays, 8);
   }
 }
 
@@ -398,7 +470,7 @@ void playSound(boolean looping) {
   } else {
     AudioOutI2S.play(waveFile);
   }
-  
+
   startedPlaying = millis();
 }
 
