@@ -10,14 +10,18 @@ import Divider from '@material-ui/core/Divider';
 import Favorite from '@material-ui/icons/Favorite';
 import FavoriteBorder from '@material-ui/icons/FavoriteBorder';
 
-import { moment } from 'moment';
+import moment from 'moment';
 
 import client from './mqttClient.js'
 
 import { useStateWithLocalStorage, useLocallyPersistedReducer } from './utils/persistenceHelpers'
 
+Array.prototype.move = function(from, to) {
+  this.splice(to, 0, this.splice(from, 1)[0]);
+};
+
 export default function PageBedtime() {
-  const [time, setTime] = useStateWithLocalStorage('bedtimeAlarm');
+  const [time, setTime] =  useStateWithLocalStorage('bedtimeAlarm');
   // const [days, setDays] = React.useState();
 
   const [days, setDays] = useLocallyPersistedReducer(((state, newState) => ({ ...state, ...newState })),({
@@ -34,17 +38,23 @@ export default function PageBedtime() {
 
   const setAlarm = () => {
     let msg = ""
-    weekDays.map((d) => {
+    let week = weekDays.filter(item => item !== "sun");
+    week.unshift("sun")
+    week.map((d) => {
       msg += days[d] ? "1" : "0"
     });
-    client.publish("/days", msg);
-    client.publish("/alarm/bedtime", time.format("HH:mm:ss"))
+    client.publish("/bedtime/days", msg);
+    client.publish("/bedtime/alarm", moment(time).format("HH:mm:ss"))
   }
 
   const handleCheck = (e, d) => {
     setDays({
       [d]: e.target.checked
     })
+  }
+
+  const handleTime = (d) => {
+    setTime(d.toISOString());
   }
 
   return (
@@ -56,8 +66,8 @@ export default function PageBedtime() {
         autoOk
         variant="static"
         openTo="hours"
-        value={time}
-        onChange={setTime}
+        value={moment(time)}
+        onChange={handleTime}
       />
       <FormGroup aria-label="position" row>
       {weekDays.map((d) => (

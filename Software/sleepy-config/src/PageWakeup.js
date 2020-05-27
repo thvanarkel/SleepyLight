@@ -9,11 +9,15 @@ import CheckBoxIcon from '@material-ui/icons/CheckBox';
 import Favorite from '@material-ui/icons/Favorite';
 import FavoriteBorder from '@material-ui/icons/FavoriteBorder';
 
-import { moment } from 'moment';
+import moment from 'moment';
 
 import client from './mqttClient.js'
 
 import { useStateWithLocalStorage, useLocallyPersistedReducer } from './utils/persistenceHelpers'
+
+Array.prototype.move = function(from, to) {
+  this.splice(to, 0, this.splice(from, 1)[0]);
+};
 
 export default function PageHome() {
   const [time, setTime] = useStateWithLocalStorage('wakeAlarm');
@@ -33,17 +37,25 @@ export default function PageHome() {
 
   const setAlarm = () => {
     let msg = ""
-    weekDays.map((d) => {
+
+    let week = weekDays.filter(item => item !== "sun");
+    week.unshift("sun")
+
+    week.map((d) => {
       msg += days[d] ? "1" : "0"
     });
-    client.publish("/days", msg);
-    client.publish("/alarm/bedtime", time.format("HH:mm:ss"))
+    client.publish("/wakeup/days", msg);
+    client.publish("/wakeup/alarm", moment(time).format("HH:mm:ss"))
   }
 
   const handleCheck = (e, d) => {
     setDays({
       [d]: e.target.checked
     })
+  }
+
+  const handleTime = (d) => {
+    setTime(d.toISOString());
   }
 
   return (
@@ -55,7 +67,7 @@ export default function PageHome() {
         autoOk
         variant="static"
         openTo="hours"
-        value={time}
+        value={moment(time)}
         onChange={setTime}
       />
       <FormGroup aria-label="position" row>

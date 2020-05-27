@@ -60,6 +60,10 @@ h1 {
   padding-bottom: 20px;
 }
 
+.MuiFormControlLabel-labelPlacementTop {
+  margin-left: 2px !important;
+}
+
 .App-link {
   color: #61dafb;
 }
