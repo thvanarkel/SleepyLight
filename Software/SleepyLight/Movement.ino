@@ -6,12 +6,14 @@ float deltat;
 
 float pPitch, pRoll;
 
+#define TURN_THRESHOLD 80
+
 boolean detectTurn(Orientation lastOrientation) {
   Orientation currentOrientation;
   
-  if (pitch < -60) {
+  if (pitch < -TURN_THRESHOLD) {
     currentOrientation = UPWARD;
-  } else if (pitch > 60) {
+  } else if (pitch > TURN_THRESHOLD) {
     currentOrientation = DOWNWARD;
   }
   orientation = currentOrientation;
@@ -19,18 +21,25 @@ boolean detectTurn(Orientation lastOrientation) {
 }
 
 unsigned long shakeDebounce;
+unsigned long lastShake;
+
+#define SHAKE_SENSITIVITY 5
+#define SHAKE_RESET 2000
 
 void detectMovement() {
-  if (roll - pRoll > 5) {
+  if (roll - pRoll > SHAKE_SENSITIVITY) {
     if (millis() - shakeDebounce > 75) {
       Serial.println("--shake--");
       nShakes++;
-      Serial.println(nShakes);
+      lastShake = millis();
       shakeDebounce = millis();
       client.publish("/shakes", String(nShakes));
     }
     
 //    delay(75);
+  }
+  if (millis() - lastShake > SHAKE_RESET) {
+    nShakes = 0;
   }
 }
 

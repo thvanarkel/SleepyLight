@@ -201,8 +201,6 @@ void loop() {
   }
 
   updateOrientation();
-  //
-  //
   detectMovement();
 
 
