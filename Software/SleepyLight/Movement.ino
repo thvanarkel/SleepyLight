@@ -6,8 +6,6 @@ float deltat;
 
 float pPitch, pRoll;
 
-int nShakes;
-
 boolean detectTurn(Orientation lastOrientation) {
   Orientation currentOrientation;
   
@@ -23,12 +21,13 @@ boolean detectTurn(Orientation lastOrientation) {
 unsigned long shakeDebounce;
 
 void detectMovement() {
-  if (roll - pRoll > 4) {
-    if (millis() - shakeDebounce > 50) {
+  if (roll - pRoll > 5) {
+    if (millis() - shakeDebounce > 75) {
       Serial.println("--shake--");
       nShakes++;
       Serial.println(nShakes);
       shakeDebounce = millis();
+      client.publish("/shakes", String(nShakes));
     }
     
 //    delay(75);

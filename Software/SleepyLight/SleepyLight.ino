@@ -35,7 +35,7 @@ unsigned long lastUpdate;
 #define BUFF_MAX 256
 
 uint8_t sleep_period = 1;
-unsigned long prev = 5000, interval = 500;
+unsigned long prev = 5000, interval = 1000;
 
 #define SHUTDOWN_PIN 5
 
@@ -65,6 +65,7 @@ SDWaveFile waveFile;
 
 Orientation orientation;
 boolean didTurn;
+int nShakes;
 
 enum Movement {
   PICKUP = 0,
@@ -188,12 +189,12 @@ void loop() {
     lastState = currentState;
   }
 
-  if (millis() - lastUpdate > 1000) {
-    client.publish("/ledLevel", String(lamp.level));
-
-    //    client.publish("/orientation", String(orientation));
-    lastUpdate = millis();
-  }
+//  if (millis() - lastUpdate > 1000) {
+//    client.publish("/ledLevel", String(lamp.level));
+//
+//    //    client.publish("/orientation", String(orientation));
+//    lastUpdate = millis();
+//  }
 
   updateOrientation();
   //
@@ -254,9 +255,9 @@ void updateStateMachine() {
       if (rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
         DateTime now = rtc.now();
-        DateTime future(now + TimeSpan(0, 0, 30, 0)); // TODO: fix the times
+        DateTime future(now + TimeSpan(0, 0, 2, 0)); // TODO: fix the times
         rtc.setAlarm1(future, DS3231_A1_Hour);
-        lamp.turnOn(30 * 60 * 1000); // TODO: fix the times
+        lamp.turnOn(2 * 60 * 1000); // TODO: fix the times
         currentState = AWAKENING;
       }
 
@@ -274,8 +275,8 @@ void updateStateMachine() {
     case AWAKENING:
       if (rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
-        digitalWrite(SHUTDOWN_PIN, HIGH);
-        AudioOutI2S.play(waveFile);
+        playSound(true);
+        nShakes = 0;
         // TODO: set the alarm for the next day!
         // TODO: check for calendar days
         currentState = ALARMED;
@@ -285,15 +286,21 @@ void updateStateMachine() {
     case ALARMED:
       if (!AudioOutI2S.isPlaying()) {
         // playback has stopped
-        digitalWrite(SHUTDOWN_PIN, HIGH);
-        AudioOutI2S.play(waveFile);
+        playSound(true);
       }
       if (detectTurn(orientation)) {
-        AudioOutI2S.stop();
-        digitalWrite(SHUTDOWN_PIN, LOW);
+        stopSound();
         lamp.orientation = orientation;
         lamp.turnOff(2000);
         currentState = LIGHT_IDLE;
+      }
+      if (nShakes > 5) {
+        stopSound();
+        nShakes = 0;
+        DateTime now = rtc.now();
+        DateTime future(now + TimeSpan(0, 0, 2, 0)); // TODO: fix the times
+        rtc.setAlarm1(future, DS3231_A1_Hour);
+        currentState = AWAKENING;
       }
       break;
   }
@@ -329,7 +336,7 @@ void setAlarm(String str) {
   rtc.clearAlarm(1);
   DateTime now = rtc.now();
   DateTime a(now.year(), now.month(), now.day(), getValue(str, ':', 0).toInt(), getValue(str, ':', 1).toInt(), 0);
-  DateTime future = a - TimeSpan(0, 0, 30, 0);
+  DateTime future = a - TimeSpan(0, 0, 2, 0);
   rtc.setAlarm1(future, DS3231_A1_Hour);
   char buffer[] = "hh:mm:ss";
   String msg = future.toString(buffer);
@@ -363,8 +370,18 @@ void setSound(int index) {
 
 }
 
-void playSound() {
+void playSound(boolean looping) {
   digitalWrite(SHUTDOWN_PIN, HIGH);
-  AudioOutI2S.play(waveFile);
+  if (looping) {
+    AudioOutI2S.loop(waveFile);
+  } else {
+    AudioOutI2S.play(waveFile);
+  }
+  
   startedPlaying = millis();
+}
+
+void stopSound() {
+  digitalWrite(SHUTDOWN_PIN, LOW);
+  AudioOutI2S.stop();
 }
