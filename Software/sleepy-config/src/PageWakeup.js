@@ -10,6 +10,10 @@ import Favorite from '@material-ui/icons/Favorite';
 import FavoriteBorder from '@material-ui/icons/FavoriteBorder';
 import Box from '@material-ui/core/Box';
 import TimeSlider from './TimeSlider'
+import { FormControl,
+         Select,
+         MenuItem,
+         FormHelperText } from '@material-ui/core'
 
 import moment from 'moment';
 
@@ -25,6 +29,7 @@ export default function PageHome() {
   const [time, setTime] = useStateWithLocalStorage('wakeAlarm');
   const [awake,setAwake] = useStateWithLocalStorage('awakeTime', 30);
   const [snooze,setSnooze] = useStateWithLocalStorage('snooze', 8);
+  const [sound, setSound] = useStateWithLocalStorage('sound', 2);
   // const [days, setDays] = React.useState();
 
   const [days, setDays] = useLocallyPersistedReducer(((state, newState) => ({ ...state, ...newState })),({
@@ -35,7 +40,7 @@ export default function PageHome() {
       'vr': false,
       'za': false,
       'zo': false
-    }), "wakeDays" );
+    }), "wakeupDays" );
 
   React.useEffect(() => {
     if (!client.isConnected()) {
@@ -76,6 +81,11 @@ export default function PageHome() {
     client.publish("/snooze", String(v));
   }
 
+  const handleSound = (e) => {
+    setSound(e.target.value);
+    client.publish("/sound", String(e.target.value));
+  }
+
   const marks = [
     {
       value: 2,
@@ -110,6 +120,7 @@ export default function PageHome() {
         autoOk
         variant="static"
         openTo="hours"
+        ampm={false}
         value={moment(time)}
         onChange={setTime}
       />
@@ -152,6 +163,24 @@ export default function PageHome() {
           marks={marks}
           min={2}
           max={15}/>
+      </Box>
+      <Box mt={2}>
+      <FormControl>
+        <Select
+          value={sound}
+          onChange={handleSound}
+          displayEmpty
+        >
+          <MenuItem value={0}>Birdsong</MenuItem>
+          <MenuItem value={1}>Bright</MenuItem>
+          <MenuItem value={2}>Droplets</MenuItem>
+          <MenuItem value={3}>Early</MenuItem>
+          <MenuItem value={4}>Helios</MenuItem>
+          <MenuItem value={6}>Spring</MenuItem>
+          <MenuItem value={7}>Sunny</MenuItem>
+        </Select>
+        <FormHelperText>Geluid</FormHelperText>
+      </FormControl>
       </Box>
 
     </div>

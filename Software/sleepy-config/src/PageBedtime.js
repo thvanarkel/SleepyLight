@@ -37,7 +37,7 @@ export default function PageBedtime() {
       'vr': false,
       'za': false,
       'zo': false
-    }), "bedtimeDays" );
+    }), "bedtimeD" );
 
   const weekDays = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
@@ -83,6 +83,7 @@ export default function PageBedtime() {
         autoOk
         variant="static"
         openTo="hours"
+        ampm={false}
         value={moment(time)}
         onChange={handleTime}
       />
