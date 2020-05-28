@@ -3,6 +3,7 @@
 #include "Lamp.h"
 #include <MQTT.h>
 #include <SD.h>
+#include <SDConfigCommand.h>
 #include <ArduinoSound.h>
 #include <Arduino_LSM6DS3.h>
 #include "SensorFusion.h"
@@ -28,10 +29,10 @@ MQTTClient client;
 
 RTC_DS3231 rtc;
 
-char bedtimeDays[8] = "0111110";
-char wakeupDays[8] = "0111110";
-String bedtimeAlarm;
-String wakeupAlarm;
+//char bedtimeDays[8] = "0111110";
+//char wakeupDays[8] = "0111110";
+//String bedtimeAlarm;
+//String wakeupAlarm;
 
 Lamp lamp(5, 10);
 unsigned long lastUpdate;
@@ -40,19 +41,50 @@ uint8_t sleep_period = 1;
 unsigned long prev = 5000, interval = 1000;
 
 
+struct Config {
+  String key;
+  String value;
+};
+
+
+#define NUM_CONFIGS 9
+
+Config defaultConfig[NUM_CONFIGS] = {
+  {"bedtimedays", "000000"},
+  {"wakeupdays", "000000"},
+  {"wakeupalarm", "8:00:00"},
+  {"bedtimealarm", "23:00:00"},
+  {"awakeningtime", "1"},
+  {"unwinddecay", "30"},
+  {"slumberdecay", "30"},
+  {"snooze", "8"},
+  {"currentsound", "5"}
+};
+
+Config configuration[NUM_CONFIGS] = {
+  {"bedtimedays", ""},
+  {"wakeupdays", ""},
+  {"wakeupalarm", ""},
+  {"bedtimealarm", ""},
+  {"awakeningtime", ""},
+  {"unwinddecay", ""},
+  {"slumberdecay", ""},
+  {"snooze", ""},
+  {"currentsound", ""}
+};
+
+
 // State parameters
 
 int slumberIntensity = 65;
-int slumberDecay = 30 * 1000;
+//int slumberDecay = 30 * 1000;
 int slumberShake = 2500;
 
-int awakeningPeriod = 1; // in minutes
+//int awakeningPeriod = 1; // in minutes
 
-int unwindDecay = 30 * 60 * 1000;
+//int unwindDecay = 30;
 
-int snoozePeriod = 8; // in minutes
-
-
+//int snoozePeriod = 8; // in minutes
 
 
 #define SHUTDOWN_PIN 5
@@ -75,6 +107,7 @@ static Sound sounds[8] = {{"birdsong.wav", 61},
 int currentSound = 5;
 unsigned long startedPlaying;
 
+SDConfigCommand sdcc;
 SDWaveFile waveFile;
 
 Orientation orientation = NONE;
@@ -133,6 +166,12 @@ void setup() {
     client.publish("/error", "SD initialization failed");
     //    return;
   }
+
+  // check config
+  loadConfig();
+
+  currentSound = getConfig("currentsound").toInt();
+  Serial.println(currentSound);
   waveFile = SDWaveFile(sounds[currentSound].filename);
   if (!waveFile) {
     client.publish("/error", "wave file invalid");
@@ -161,6 +200,73 @@ void setup() {
   client.publish("/state", String(currentState));
   lastState = currentState;
 }
+
+
+int cIndex = 0;
+
+void loadConfig() {
+  Serial.println("Creating example.txt...");
+
+  File myFile;
+
+  if (!SD.exists("setting.cfg")) {
+    Serial.println("file does not exist");
+    myFile = SD.open("setting.cfg", FILE_WRITE);
+    writeDefaultConfig(myFile);
+    myFile.close();
+  } else {
+    client.publish("/config", "file does exist");
+  }
+  // Load the configuration
+  while ( !(sdcc.set("setting.cfg", 4, processCmd)) ) {}
+
+  sdcc.readConfig();
+  
+}
+
+void writeDefaultConfig(File file) {
+  for (int i = 0; i < NUM_CONFIGS; i++) {
+    Config c = defaultConfig[i];
+    file.print(c.key);
+    file.print("=");
+    file.println(c.value);
+  }
+}
+
+void setConfig(String key, String value) {
+  for (int i = 0; i < NUM_CONFIGS; i++) {
+    Config c = configuration[i];
+    if (c.key.equals(key)) {
+      c.value = value;
+      sdcc.writeConfig(key, value);
+    }
+  }
+}
+
+String getConfig(String key) {
+  Serial.println(key);
+  for (int i = 0; i < NUM_CONFIGS; i++) {
+    Config c = configuration[i];
+    if (c.key.equals(key)) {
+      return c.value;
+    }
+  }
+}
+
+void processCmd() {
+  // This function will run every time there is a command
+  // Maybe check the key?
+  String k = sdcc.getCmdS();
+  String v = sdcc.getValueS();
+
+  if (cIndex < NUM_CONFIGS) {
+    configuration[cIndex].key = k;
+    configuration[cIndex].value = v;
+    cIndex++;
+  }
+  
+}
+
 
 void connect() {
   Serial.print("checking wifi...");
@@ -232,7 +338,6 @@ void loop() {
 }
 
 void updateStateMachine() {
-  Serial.println(currentState);
   switch (currentState) {
     case LIGHT_IDLE:
 
@@ -247,16 +352,16 @@ void updateStateMachine() {
         if (lamp.level >= 1023) {
           didTurn = false;
           currentState = UNWINDING;
-          lamp.turnOff(unwindDecay);
+          lamp.turnOff(getConfig("unwinddecay").toInt() * 60 * 1000);
         } // TODO: Turn this into a function
       }
       // Check if the wake-up alarm has fired
       if (rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
         DateTime now = rtc.now();
-        DateTime future(now + TimeSpan(0, 0, awakeningPeriod, 0));
+        DateTime future(now + TimeSpan(0, 0, getConfig("awakeningtime").toInt(), 0));
         rtc.setAlarm1(future, DS3231_A1_Hour);
-        lamp.turnOn(awakeningPeriod * 60 * 1000);
+        lamp.turnOn(getConfig("awakeningtime").toInt() * 60 * 1000);
         currentState = AWAKENING;
       }
 
@@ -304,7 +409,7 @@ void updateStateMachine() {
         stopSound();
         nShakes = 0;
         DateTime now = rtc.now();
-        DateTime future(now + TimeSpan(0, 0, snoozePeriod, 0)); // TODO: fix the times
+        DateTime future(now + TimeSpan(0, 0, getConfig("snooze").toInt(), 0)); // TODO: fix the times
         rtc.setAlarm1(future, DS3231_A1_Hour);
         currentState = AWAKENING;
         break;
@@ -322,7 +427,7 @@ void updateStateMachine() {
     case SLUMBERING:
       if (!lamp.inAnimation()) {
         if (lamp.level >= slumberIntensity) {
-          lamp.turnOff(slumberDecay);
+          lamp.turnOff(getConfig("slumberdecay").toInt() * 1000);
         } else {
           currentState = LIGHT_IDLE;
         }
@@ -356,17 +461,26 @@ String getValue(String data, char separator, int index)
 
 void setAlarm(String str, boolean wakeup) {
   //(year, month, day, hour, minute, second)
-  
+
   int alarmIndex = wakeup ? 1 : 2;
   rtc.clearAlarm(alarmIndex);
   DateTime now = rtc.now();
   DateTime a(now.year(), now.month(), now.day(), getValue(str, ':', 0).toInt(), getValue(str, ':', 1).toInt(), 0);
 
   if (now < a) {
-    // Still do the alarm today
-    char theDay = wakeup ? wakeupDays[now.dayOfTheWeek()] : bedtimeDays[now.dayOfTheWeek()];
+    // Still do the alarm today  
+    char theDay;
+    if (wakeup) {
+      char wd[8];
+      getConfig("wakeupdays").toCharArray(wd, 8);
+      theDay = wd[now.dayOfTheWeek()];
+    } else {
+      char bd[8];
+      getConfig("bedtimedays").toCharArray(bd, 8);
+      theDay = bd[now.dayOfTheWeek()];
+    }
     if (theDay == '1') {
-      DateTime future = a - TimeSpan(0, 0, awakeningPeriod, 0);
+      DateTime future = a - TimeSpan(0, 0, getConfig("awakeningtime").toInt(), 0);
       if (wakeup) {
         rtc.setAlarm1(future, DS3231_A1_Hour);
         publishDate("/wakeup/alarm/time", future);
@@ -381,13 +495,6 @@ void setAlarm(String str, boolean wakeup) {
     // Schedule next alarm
     nextAlarm(wakeup);
   }
-
-
-  //  rtc.setAlarm1(future, DS3231_A1_Hour);
-
-  //  char buffer[] = "hh:mm:ss";
-  //  String msg = future.toString(buffer);
-  //  client.publish("/light-alarm", msg);
 }
 
 
@@ -397,19 +504,21 @@ void nextAlarm(boolean wakeup)
   //
   //  rtc.setAlarm1(future, DS3231_A1_Minute);
   DateTime now = rtc.now();
-  String str = wakeup ? wakeupAlarm : bedtimeAlarm;
+  String str = wakeup ? getConfig("wakeupalarm") : getConfig("bedtimealarm");
   DateTime a(now.year(), now.month(), now.day(), getValue(str, ':', 0).toInt(), getValue(str, ':', 1).toInt(), 0);
   boolean foundNext = false;
   int i = 1;
-  while(!foundNext) {
+  while (!foundNext) {
     int index = now.dayOfTheWeek() + i > 6 ? now.dayOfTheWeek() + i - 7 : now.dayOfTheWeek() + i;
-    char d = wakeup ? wakeupDays[index] : bedtimeDays[index];  
+    char wd[8];
+    getConfig("wakeupdays").toCharArray(wd, 8);
+    char d = wakeup ? wd[index] : wd[index];
     if (d != '1') {
       i++;
     } else {
       foundNext = true;
       DateTime n = a + TimeSpan(i, 0, 0, 0);
-      DateTime future = n - TimeSpan(0, 0, awakeningPeriod, 0);
+      DateTime future = n - TimeSpan(0, 0, getConfig("awakeningtime").toInt(), 0);
       if (wakeup) {
         rtc.setAlarm1(future, DS3231_A1_Date);
         publishDate("/wakeup/alarm/time", future);
@@ -442,27 +551,28 @@ void messageReceived(String &topic, String &payload) {
   } else if (payload.equals("false") && lamp.level >= 1023) {
     lamp.turnOff(2000);
   } else if (topic.equals("/wakeup/alarm")) {
-    wakeupAlarm = payload;
+    setConfig("wakeupalarm", payload);
     setAlarm(payload, true);
   } else if (topic.equals("/wakeup/days")) {
-    payload.toCharArray(wakeupDays, 8);
+    setConfig("wakeupdays", payload);
   } else if (topic.equals("/bedtime/alarm")) {
-    bedtimeAlarm = payload;
+    setConfig("bedtimealarm", payload);
     setAlarm(payload, false);
   } else if (topic.equals("/bedtime/days")) {
-    payload.toCharArray(bedtimeDays, 8);
+    setConfig("bedtimedays", payload);
   } else if (topic.equals("/bedtime/reminder")) {
-    
+
   } else if (topic.equals("/awakeTime")) {
-    awakeningPeriod = payload.toInt();
+    setConfig("awakeningtime", payload);
   } else if (topic.equals("/unwindTime")) {
-    unwindDecay = payload.toInt() * 60 * 1000;
+    setConfig("unwinddecay", payload);
   } else if (topic.equals("/slumberTime")) {
-    slumberDecay = payload.toInt() * 1000;
+    setConfig("slumberdecay", payload);
   }
 }
 
 void setSound(int index) {
+  currentSound = getConfig("currentsound").toInt();
   if (currentSound != index) {
     currentSound = index;
     waveFile = SDWaveFile(sounds[currentSound].filename);
@@ -479,7 +589,7 @@ void playSound() {
 }
 
 void loopSound() {
-  if (millis() - startedPlaying > ((sounds[currentSound].duration - 8)*1000)) {
+  if (millis() - startedPlaying > ((sounds[currentSound].duration - 8) * 1000)) {
     AudioOutI2S.stop();
   }
 }

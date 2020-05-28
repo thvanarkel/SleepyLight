@@ -26,19 +26,19 @@ void Lamp::tick() {
     
     level = map(_now, startTime, endTime, startLevel, endLevel);
     level = constrain(level, 0, 1023);
-
-    Serial.print(level);
-    Serial.print(": ");
-    Serial.print(_now);
-    Serial.print(" ");
-    Serial.print(startTime);
-    Serial.print(" ");
-    Serial.print(endTime);
-    Serial.print(" ");
-    Serial.print(startLevel);
-    Serial.print(" ");
-    Serial.println(endLevel);
-    
+//
+//    Serial.print(level);
+//    Serial.print(": ");
+//    Serial.print(_now);
+//    Serial.print(" ");
+//    Serial.print(startTime);
+//    Serial.print(" ");
+//    Serial.print(endTime);
+//    Serial.print(" ");
+//    Serial.print(startLevel);
+//    Serial.print(" ");
+//    Serial.println(endLevel);
+//    
     for (int i = 0; i < _ledsPerSide; i++) {
 //      int v = ((level/1023.0) * 255) - (80 * exp(-(0.00099 * (1.25 * i + 1)) * level));
       float v = ((constrain(1.4 * (i + 1) * level, 0, 1023)/1023) * 255);
