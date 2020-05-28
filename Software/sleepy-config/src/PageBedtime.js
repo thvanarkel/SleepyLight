@@ -26,7 +26,7 @@ Array.prototype.move = function(from, to) {
 export default function PageBedtime() {
   const [time, setTime] =  useStateWithLocalStorage('bedtimeAlarm');
   const [reminder, setReminder] = useStateWithLocalStorage('reminder');
-  const [unwind, setUnwind] = useStateWithLocalStorage('unwind', 0);
+  const [unwind, setUnwind] = useStateWithLocalStorage('unwind', 30);
   // const [days, setDays] = React.useState();
 
   const [days, setDays] = useLocallyPersistedReducer(((state, newState) => ({ ...state, ...newState })),({

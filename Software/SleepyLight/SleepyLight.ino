@@ -54,11 +54,12 @@ Config defaultConfig[NUM_CONFIGS] = {
   {"wakeupdays", "000000"},
   {"wakeupalarm", "8:00:00"},
   {"bedtimealarm", "23:00:00"},
-  {"awakeningtime", "1"},
+  {"awakeningtime", "30"},
   {"unwinddecay", "30"},
   {"slumberdecay", "30"},
   {"snooze", "8"},
-  {"currentsound", "5"}
+  {"currentsound", "5"},
+  {"bedtimereminder", "30"}
 };
 
 Config configuration[NUM_CONFIGS] = {
@@ -70,7 +71,8 @@ Config configuration[NUM_CONFIGS] = {
   {"unwinddecay", ""},
   {"slumberdecay", ""},
   {"snooze", ""},
-  {"currentsound", ""}
+  {"currentsound", ""},
+  {"bedtimereminder", "30"}
 };
 
 
@@ -167,6 +169,7 @@ void setup() {
     //    return;
   }
 
+  // SD.remove(SETTING_FILE); // Delete configuration file
   // check config
   loadConfig();
 
@@ -561,13 +564,15 @@ void messageReceived(String &topic, String &payload) {
   } else if (topic.equals("/bedtime/days")) {
     setConfig("bedtimedays", payload);
   } else if (topic.equals("/bedtime/reminder")) {
-
+    setConfig("bedtimereminder", payload);
   } else if (topic.equals("/awakeTime")) {
     setConfig("awakeningtime", payload);
   } else if (topic.equals("/unwindTime")) {
     setConfig("unwinddecay", payload);
   } else if (topic.equals("/slumberTime")) {
     setConfig("slumberdecay", payload);
+  } else if (topic.equals("/snooze")) {
+    setConfig("snooze", payload);
   }
 }
 

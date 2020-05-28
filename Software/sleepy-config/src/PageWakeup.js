@@ -23,7 +23,8 @@ Array.prototype.move = function(from, to) {
 
 export default function PageHome() {
   const [time, setTime] = useStateWithLocalStorage('wakeAlarm');
-  const [awake,setAwake] = useStateWithLocalStorage('awakeTime', 0);
+  const [awake,setAwake] = useStateWithLocalStorage('awakeTime', 30);
+  const [snooze,setSnooze] = useStateWithLocalStorage('snooze', 8);
   // const [days, setDays] = React.useState();
 
   const [days, setDays] = useLocallyPersistedReducer(((state, newState) => ({ ...state, ...newState })),({
@@ -65,6 +66,37 @@ export default function PageHome() {
     client.publish("/awakeTime", String(v));
   }
 
+  const sendSnooze = (v) => {
+    client.publish("/snooze", String(v));
+  }
+
+  const marks = [
+    {
+      value: 2,
+      label: '2m',
+    },
+    {
+      value: 3,
+      label: '3m',
+    },
+    {
+      value: 5,
+      label: '5m',
+    },
+    {
+      value: 8,
+      label: '8m',
+    },
+    {
+      value: 10,
+      label: '10m',
+    },
+    {
+      value: 15,
+      label: '15m',
+    }
+  ];
+
   return (
 
     <div className="screen">
@@ -96,13 +128,24 @@ export default function PageHome() {
         disabled={!time}
         onClick={setAlarm}>Stel opstaan alarm in</Button>
 
-      <Box mt={2}>
+      <Box mt={3}>
       <TimeSlider
         value={parseInt(awake)}
         onChange={setAwake}
         onChangeCommitted={sendAwakeTime}
         title="Ontwakingstijd"
         description="Tijd voor je alarm dat de lamp aan gaat"/>
+      </Box>
+      <Box mt={2}>
+      <TimeSlider
+          value={parseInt(snooze)}
+          onChange={setSnooze}
+          onChangeCommitted={sendSnooze}
+          title="Snooze tijd"
+          description="Tijd die je per keer je wekker kunt uitstellen"
+          marks={marks}
+          min={2}
+          max={15}/>
       </Box>
 
     </div>

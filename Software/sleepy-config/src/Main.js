@@ -13,71 +13,52 @@ import PageHome from './PageHome.js'
 import PageBedtime from './PageBedtime.js'
 import PageWakeup from './PageWakeup.js'
 
+import client from './mqttClient.js'
 
 import { moment } from 'moment';
 
 
 
-class Main extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      authenticated: false,
-      alarm: null,
-      turnedOn: false,
-      tab: 0,
-      slider: 50
+export default function Main () {
+  const [tab, setTab] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!client.isConnected()) {
+      window.location.reload(true);
     }
-  }
+  })
 
-  // called when sending payload
-
-
-  handleChange = (event) => {
-    this.setState({ turnedOn: event.target.checked });
-
-  }
-
-  handleDateChange = (event) => {
-    this.setState({alarm: event})
-    // client.publish("/date", String(event.format("h:mm:ss")))
-  }
-
-  sendDate = (event) => {
-    // client.publish("/alarm", this.state.alarm.format("HH:mm:ss"))
-  }
-
-  setTab = (value) => {
-    this.setState({tab: value});
-  }
-
-  selectPage = (i) => {
-
-  }
-
-
-  render() {
+  const selectPage = () => {
     let page;
-    switch(this.state.tab) {
+    switch(tab) {
       case 0:
-        page = <PageHome />;
+        return (<PageHome />);
         break;
       case 1:
-        page = <PageBedtime />;
+        return (<PageBedtime />);
         break;
       case 2:
-        page = <PageWakeup />;
+        return (<PageWakeup />);
         break;
     }
-    return (
-      <div className="App">
-        {page}
-
-
-        <Navigation setTab={this.setTab} />
-      </div>
-    );
+    return page;
   }
-}
 
-export default Main;//withStyles(styles)(App);
+  return (
+    <div className="App">
+      {(() => {
+        switch (tab) {
+          case 0:
+            return <PageHome />;
+          case 1:
+            return <PageBedtime />;
+          case 2:
+            return <PageWakeup />;
+          default:
+            return null;
+      }
+    })()}
+      <Navigation setTab={setTab} />
+    </div>
+  );
+}

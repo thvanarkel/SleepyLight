@@ -70,15 +70,6 @@ export default function Controls() {
       control={<Switch checked={on} onChange={turnOn} name="turnedOn" />}
       label="Light on?"
     />
-    <Slider value={value}
-            onChange={(e, v) => {
-              setValue(v);
-            }}
-            onChangeCommitted={(e, v) => { client.publish("/ledLevel", String(value)); }}
-            aria-labelledby="continuous-slider"
-            step={5}
-            min={0}
-            max={1023} />
     <TimeSlider
         value={parseInt(slumber)}
         onChange={setSlumber}
