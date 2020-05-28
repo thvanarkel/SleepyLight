@@ -6,9 +6,12 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormGroup from '@material-ui/core/FormGroup';
 import Checkbox from '@material-ui/core/Checkbox';
 import CheckBoxIcon from '@material-ui/icons/CheckBox';
-import Divider from '@material-ui/core/Divider';
+import Slider from '@material-ui/core/Slider';
 import Favorite from '@material-ui/icons/Favorite';
 import FavoriteBorder from '@material-ui/icons/FavoriteBorder';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
+import TimeSlider from './TimeSlider'
 
 import moment from 'moment';
 
@@ -22,24 +25,28 @@ Array.prototype.move = function(from, to) {
 
 export default function PageBedtime() {
   const [time, setTime] =  useStateWithLocalStorage('bedtimeAlarm');
+  const [reminder, setReminder] = useStateWithLocalStorage('reminder');
+  const [unwind, setUnwind] = useStateWithLocalStorage('unwind', 0);
   // const [days, setDays] = React.useState();
 
   const [days, setDays] = useLocallyPersistedReducer(((state, newState) => ({ ...state, ...newState })),({
-      'mon': false,
-      'tue': false,
-      'wed': false,
-      'thu': false,
-      'fri': false,
-      'sat': false,
-      'sun': false
+      'ma': false,
+      'di': false,
+      'wo': false,
+      'do': false,
+      'vr': false,
+      'za': false,
+      'zo': false
     }), "bedtimeDays" );
 
-  const weekDays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const weekDays = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
+
+
 
   const setAlarm = () => {
     let msg = ""
-    let week = weekDays.filter(item => item !== "sun");
-    week.unshift("sun")
+    let week = weekDays.filter(item => item !== "zo");
+    week.unshift("zo")
     week.map((d) => {
       msg += days[d] ? "1" : "0"
     });
@@ -57,11 +64,17 @@ export default function PageBedtime() {
     setTime(d.toISOString());
   }
 
+  const sendUnwind = (v) => {
+    client.publish("/unwindTime", String(v));
+  }
+
+  const sendReminder = (v) => {
+    client.publish("/bedtime/reminder", String(v));
+  }
+
   return (
 
     <div className="screen">
-      <h1>Bedtime</h1>
-
       <TimePicker
         autoOk
         variant="static"
@@ -69,6 +82,7 @@ export default function PageBedtime() {
         value={moment(time)}
         onChange={handleTime}
       />
+      <Box mx="auto" mt={2}>
       <FormGroup aria-label="position" row>
       {weekDays.map((d) => (
         <React.Fragment key={d}>
@@ -81,15 +95,30 @@ export default function PageBedtime() {
         </React.Fragment>
       ))}
       </FormGroup>
+      </Box>
 
       <Button
         variant="outlined"
         color="secondary"
         disabled={!time}
-        onClick={setAlarm}>Set alarm</Button>
+        onClick={setAlarm}>Stel bedtijd in</Button>
+      <Box mt={3}>
+      <TimeSlider
+        value={parseInt(reminder)}
+        onChange={setReminder}
+        onChangeCommitted={sendReminder}
+        title="Bedtijdherinnering"
+        description="Tijd voor je bedtijd dat de lamp een herinnering geeft"/>
+      </Box>
 
-      <Divider light />
-      <p>Test</p>
+      <Box mt={2}>
+      <TimeSlider
+        value={parseInt(unwind)}
+        onChange={setUnwind}
+        onChangeCommitted={sendUnwind}
+        title="Ontspanningstijd"
+        description="Tijd voordat de lamp uitgaat"/>
+      </Box>
     </div>
 
   );

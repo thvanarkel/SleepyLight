@@ -42,10 +42,15 @@ unsigned long prev = 5000, interval = 1000;
 
 // State parameters
 
-int slumberIntensity = 75;
-int slumberDecay = 10000;
+int slumberIntensity = 65;
+int slumberDecay = 30 * 1000;
+int slumberShake = 2500;
 
-int awakePeriod = 2; // in minutes
+int awakeningPeriod = 1; // in minutes
+
+int unwindDecay = 30 * 60 * 1000;
+
+int snoozePeriod = 8; // in minutes
 
 
 
@@ -72,7 +77,7 @@ unsigned long startedPlaying;
 
 SDWaveFile waveFile;
 
-Orientation orientation;
+Orientation orientation = NONE;
 boolean didTurn;
 int nShakes;
 
@@ -99,7 +104,6 @@ void setup() {
   Serial.begin(115200);
   Serial.print("connecting");
   //
-  lamp.orientation = orientation;
 
   while (status != WL_CONNECTED) {
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
@@ -152,6 +156,7 @@ void setup() {
 
   updateOrientation();
   detectTurn(orientation);
+  lamp.orientation = orientation;
 
   client.publish("/state", String(currentState));
   lastState = currentState;
@@ -172,10 +177,11 @@ void connect() {
   Serial.println("\nconnected!");
 
   client.subscribe("/turnedOn");
-  client.subscribe("/wakeup/alarm");
-  client.subscribe("/wakeup/days");
-  client.subscribe("/bedtime/alarm");
-  client.subscribe("/bedtime/days");
+  client.subscribe("/wakeup/#");
+  client.subscribe("/bedtime/#");
+  client.subscribe("/awakeTime");
+  client.subscribe("/unwindTime");
+  client.subscribe("/slumberTime");
   //  client.subscribe("/ledLevel");
 }
 
@@ -211,30 +217,12 @@ void loop() {
 
   updateOrientation();
   detectMovement();
+  lamp.orientation = orientation;
 
-
-  //  //
-  //  //  char buff[BUFF_MAX];
   unsigned long n = millis();
   if ((n - prev > interval)) {
     DateTime now = rtc.now();
     publishDate("/time", now);
-    //      if (rtc.alarmFired(1)) {
-    //        rtc.clearAlarm(1);
-    //        client.publish("/event/alarm", "true");
-    //  //      //
-    //  //      //      if (turnedOn) {
-    //  //      //        lamp.turnOff(8000);
-    //  //      //      } else {
-    //  //      //        lamp.turnOn(2000);
-    //  //      //      }
-    //  //      //      turnedOn = !turnedOn;
-    //        digitalWrite(SHUTDOWN_PIN, HIGH);
-    //        AudioOutI2S.play(waveFile);
-    //  //      //      //       nextAlarm();
-    //  //      //      //        // clear a2 alarm flag and let INT go into hi-z
-    //  //      //      //        // DS3231_clear_a2f();
-    //      }
     prev = n;
   }
 
@@ -259,16 +247,16 @@ void updateStateMachine() {
         if (lamp.level >= 1023) {
           didTurn = false;
           currentState = UNWINDING;
-          lamp.turnOff(10000);
-        }
+          lamp.turnOff(unwindDecay);
+        } // TODO: Turn this into a function
       }
       // Check if the wake-up alarm has fired
       if (rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
         DateTime now = rtc.now();
-        DateTime future(now + TimeSpan(0, 0, 2, 0)); // TODO: fix the times
+        DateTime future(now + TimeSpan(0, 0, awakeningPeriod, 0));
         rtc.setAlarm1(future, DS3231_A1_Hour);
-        lamp.turnOn(2 * 60 * 1000); // TODO: fix the times
+        lamp.turnOn(awakeningPeriod * 60 * 1000);
         currentState = AWAKENING;
       }
 
@@ -281,8 +269,13 @@ void updateStateMachine() {
       break;
 
     case UNWINDING:
-      if (lamp.level <= 0) {
+      if (!lamp.inAnimation()) {
         currentState = LIGHT_IDLE;
+      }
+      if (nShakes > 3) {
+        nShakes = 0;
+        lamp.changeTime((-60 * 1000));
+        client.publish("/endtime", String(lamp.endTime));
       }
       break;
 
@@ -292,7 +285,7 @@ void updateStateMachine() {
     case AWAKENING:
       if (rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
-        playSound(true);
+        playSound();
         nShakes = 0;
         // TODO: set the alarm for the next day!
         // TODO: check for calendar days
@@ -303,7 +296,18 @@ void updateStateMachine() {
     case ALARMED:
       if (!AudioOutI2S.isPlaying()) {
         // playback has stopped
-        playSound(true);
+        playSound();
+      } else {
+        loopSound();
+      }
+      if (nShakes > 3) {
+        stopSound();
+        nShakes = 0;
+        DateTime now = rtc.now();
+        DateTime future(now + TimeSpan(0, 0, snoozePeriod, 0)); // TODO: fix the times
+        rtc.setAlarm1(future, DS3231_A1_Hour);
+        currentState = AWAKENING;
+        break;
       }
       if (detectTurn(orientation)) {
         stopSound();
@@ -311,14 +315,7 @@ void updateStateMachine() {
         lamp.turnOff(2000);
         nextAlarm(true);
         currentState = LIGHT_IDLE;
-      }
-      if (nShakes > 3) {
-        stopSound();
-        nShakes = 0;
-        DateTime now = rtc.now();
-        DateTime future(now + TimeSpan(0, 0, 1, 0)); // TODO: fix the times
-        rtc.setAlarm1(future, DS3231_A1_Hour);
-        currentState = AWAKENING;
+        break;
       }
       break;
 
@@ -329,6 +326,10 @@ void updateStateMachine() {
         } else {
           currentState = LIGHT_IDLE;
         }
+      }
+      if (nShakes > 2) {
+        lamp.setLevel(slumberIntensity, 500);
+        nShakes = 0;
       }
 
       break;
@@ -365,7 +366,7 @@ void setAlarm(String str, boolean wakeup) {
     // Still do the alarm today
     char theDay = wakeup ? wakeupDays[now.dayOfTheWeek()] : bedtimeDays[now.dayOfTheWeek()];
     if (theDay == '1') {
-      DateTime future = a - TimeSpan(0, 0, 2, 0);
+      DateTime future = a - TimeSpan(0, 0, awakeningPeriod, 0);
       if (wakeup) {
         rtc.setAlarm1(future, DS3231_A1_Hour);
         publishDate("/wakeup/alarm/time", future);
@@ -408,12 +409,12 @@ void nextAlarm(boolean wakeup)
     } else {
       foundNext = true;
       DateTime n = a + TimeSpan(i, 0, 0, 0);
-      DateTime future = n - TimeSpan(0, 0, awakePeriod, 0);
+      DateTime future = n - TimeSpan(0, 0, awakeningPeriod, 0);
       if (wakeup) {
-        rtc.setAlarm1(future, DS3231_A1_Hour);
+        rtc.setAlarm1(future, DS3231_A1_Date);
         publishDate("/wakeup/alarm/time", future);
       } else {
-        rtc.setAlarm2(future, DS3231_A2_Hour);
+        rtc.setAlarm2(future, DS3231_A2_Date);
         publishDate("/bedtime/alarm/time", future);
       }
     }
@@ -450,6 +451,14 @@ void messageReceived(String &topic, String &payload) {
     setAlarm(payload, false);
   } else if (topic.equals("/bedtime/days")) {
     payload.toCharArray(bedtimeDays, 8);
+  } else if (topic.equals("/bedtime/reminder")) {
+    
+  } else if (topic.equals("/awakeTime")) {
+    awakeningPeriod = payload.toInt();
+  } else if (topic.equals("/unwindTime")) {
+    unwindDecay = payload.toInt() * 60 * 1000;
+  } else if (topic.equals("/slumberTime")) {
+    slumberDecay = payload.toInt() * 1000;
   }
 }
 
@@ -463,15 +472,16 @@ void setSound(int index) {
   }
 }
 
-void playSound(boolean looping) {
+void playSound() {
   digitalWrite(SHUTDOWN_PIN, HIGH);
-  if (looping) {
-    AudioOutI2S.loop(waveFile);
-  } else {
-    AudioOutI2S.play(waveFile);
-  }
-
+  AudioOutI2S.play(waveFile);
   startedPlaying = millis();
+}
+
+void loopSound() {
+  if (millis() - startedPlaying > ((sounds[currentSound].duration - 8)*1000)) {
+    AudioOutI2S.stop();
+  }
 }
 
 void stopSound() {

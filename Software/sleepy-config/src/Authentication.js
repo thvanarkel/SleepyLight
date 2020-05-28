@@ -46,13 +46,13 @@ export default function Authentication(props) {
   return(
     <div className="loginPage">
     <div className="login">
-      <h1>Welcome!</h1>
-      <p>Please provide the login credentials to connect to the lamp.</p>
+      <h1>Welkom!</h1>
+      <p>Geef de inloggevens op om verbinding te maken met de lamp.</p>
       <form noValidate autoComplete="off">
         <TextField
           error={error}
           id="outlined-basic"
-          label="Username"
+          label="Gebruikersnaam"
           variant="outlined"
           onChange={(e) => { setUserName(e.target.value); }}
           defaultValue={userName}
@@ -60,7 +60,7 @@ export default function Authentication(props) {
         <TextField
           error={error}
           id="outlined-basic"
-          label="Password"
+          label="Wachtwoord"
           variant="outlined"
           helperText={error == true ? 'Incorrect login credentials' : null}
           onChange={(e) => { setPassword(e.target.value); }}
@@ -70,7 +70,7 @@ export default function Authentication(props) {
           color="primary"
           disabled={!validated}
           onClick={send}>
-          Connect
+          Verbind
         </Button>
       </form>
     </div>

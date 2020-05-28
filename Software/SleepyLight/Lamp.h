@@ -12,8 +12,10 @@ enum LampMode {
 };
 
 enum Orientation {
-  UPWARD = 0,
-  DOWNWARD = 1
+  NONE = 0,
+  UPWARD = 1,
+  DOWNWARD = 2,
+  
 };
 
 class Lamp {
@@ -23,8 +25,10 @@ class Lamp {
     void turnOn(int t);
     void turnOff(int t);
     void setLevel(int l, int t);
+    void changeTime(int t);
     boolean inAnimation();
     int level;
+    unsigned long endTime;
     LampMode mode;
     Orientation orientation = UPWARD;
   private:
@@ -35,7 +39,7 @@ class Lamp {
     int startLevel;
     int endLevel;
     unsigned long startTime;
-    unsigned long endTime;
+    
     unsigned long _now;
     CRGB * leds;
 

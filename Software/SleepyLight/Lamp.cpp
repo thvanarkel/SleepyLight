@@ -87,6 +87,12 @@ void Lamp::setLevel(int l, int t) {
   endTime = now + t;
 }
 
+void Lamp::changeTime(int t) {
+  if (endTime + t > millis()) {
+    endTime += t;
+  }
+}
+
 boolean Lamp::inAnimation() {
   return level != endLevel ? true : false;
 }

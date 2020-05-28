@@ -42,7 +42,7 @@ h1 {
   /* min-height: 100vh; */
   display: flex;
   flex-direction: column;
-  align-items: center;
+  /* align-items: center; */
   /* justify-content: center; */
   font-size: calc(10px + 2vmin);
   color: white;
@@ -62,6 +62,20 @@ h1 {
 
 .MuiFormControlLabel-labelPlacementTop {
   margin-left: 2px !important;
+
+}
+
+.MuiPickersStaticWrapper-staticWrapperRoot {
+  margin: -20px !important;
+}
+
+.MuiPickersBasePicker-container {
+  display: flex;
+  align-items: center;
+}
+
+.MuiPickersToolbar-toolbar {
+  width: 100%;
 }
 
 .App-link {

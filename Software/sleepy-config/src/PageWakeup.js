@@ -8,6 +8,8 @@ import Checkbox from '@material-ui/core/Checkbox';
 import CheckBoxIcon from '@material-ui/icons/CheckBox';
 import Favorite from '@material-ui/icons/Favorite';
 import FavoriteBorder from '@material-ui/icons/FavoriteBorder';
+import Box from '@material-ui/core/Box';
+import TimeSlider from './TimeSlider'
 
 import moment from 'moment';
 
@@ -21,25 +23,26 @@ Array.prototype.move = function(from, to) {
 
 export default function PageHome() {
   const [time, setTime] = useStateWithLocalStorage('wakeAlarm');
+  const [awake,setAwake] = useStateWithLocalStorage('awakeTime', 0);
   // const [days, setDays] = React.useState();
 
   const [days, setDays] = useLocallyPersistedReducer(((state, newState) => ({ ...state, ...newState })),({
-      'mon': false,
-      'tue': false,
-      'wed': false,
-      'thu': false,
-      'fri': false,
-      'sat': false,
-      'sun': false
+      'ma': false,
+      'di': false,
+      'wo': false,
+      'do': false,
+      'vr': false,
+      'za': false,
+      'zo': false
     }), "wakeDays" );
 
-  const weekDays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+  const weekDays = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
   const setAlarm = () => {
     let msg = ""
 
-    let week = weekDays.filter(item => item !== "sun");
-    week.unshift("sun")
+    let week = weekDays.filter(item => item !== "zo");
+    week.unshift("zo")
 
     week.map((d) => {
       msg += days[d] ? "1" : "0"
@@ -58,11 +61,13 @@ export default function PageHome() {
     setTime(d.toISOString());
   }
 
+  const sendAwakeTime = (v) => {
+    client.publish("/awakeTime", String(v));
+  }
+
   return (
 
     <div className="screen">
-      <h1>Wakeup</h1>
-
       <TimePicker
         autoOk
         variant="static"
@@ -70,6 +75,7 @@ export default function PageHome() {
         value={moment(time)}
         onChange={setTime}
       />
+      <Box mx="auto" mt={2}>
       <FormGroup aria-label="position" row>
       {weekDays.map((d) => (
         <React.Fragment key={d}>
@@ -82,12 +88,23 @@ export default function PageHome() {
         </React.Fragment>
       ))}
       </FormGroup>
+      </Box>
 
       <Button
         variant="outlined"
         color="secondary"
         disabled={!time}
-        onClick={setAlarm}>Set alarm</Button>
+        onClick={setAlarm}>Stel opstaan alarm in</Button>
+
+      <Box mt={2}>
+      <TimeSlider
+        value={parseInt(awake)}
+        onChange={setAwake}
+        onChangeCommitted={sendAwakeTime}
+        title="Ontwakingstijd"
+        description="Tijd voor je alarm dat de lamp aan gaat"/>
+      </Box>
+
     </div>
   );
 }
