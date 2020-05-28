@@ -44,9 +44,13 @@ h1 {
   flex-direction: column;
   /* align-items: center; */
   /* justify-content: center; */
+  min-height: 850px;
+  height: calc(100vh - 76px);
   font-size: calc(10px + 2vmin);
   color: white;
   padding: 20px;
+  /* padding-bottom: 76px; */
+
 }
 
 .controls {
@@ -58,6 +62,10 @@ h1 {
   /* align-self: flex-end; */
   /* background-color: #3068ad; */
   padding-bottom: 20px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  z-index: 100;
 }
 
 .MuiFormControlLabel-labelPlacementTop {
