@@ -10,6 +10,10 @@ import MomentUtils from '@date-io/moment';
 import { ThemeProvider } from '@material-ui/core/styles'
 import theme from './theme'
 
+import client from './mqttClient.js'
+
+client.init();
+
 ReactDOM.render(
   // <React.StrictMode>
     <ThemeProvider theme={theme}>

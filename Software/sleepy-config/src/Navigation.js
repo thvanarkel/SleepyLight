@@ -10,6 +10,7 @@ import { BottomNavigation,
 import NightsStayIcon from '@material-ui/icons/NightsStay';
 import WbSunnyIcon from '@material-ui/icons/WbSunny';
 import TuneIcon from '@material-ui/icons/Tune';
+import ScreenRotationIcon from '@material-ui/icons/ScreenRotation'
 
 const useStyles = makeStyles({
   list: {
@@ -20,7 +21,7 @@ const useStyles = makeStyles({
   },
 });
 
-export default function Navigation() {
+export default function Navigation(props) {
   const classes = useStyles();
   const [drawer, setDrawer] = React.useState(false);
   const [index, setIndex] = React.useState(0);
@@ -47,12 +48,17 @@ export default function Navigation() {
     <div>
       <BottomNavigation
         value={index}
-        onChange={setIndex}
+        onChange={(event, newValue) => {
+          if (newValue != 3) {
+            setIndex(newValue);
+            props.setTab(newValue);
+          }
+        }}
         showLabels
-        // className={classes.root}
       >
-      <BottomNavigationAction label="Bedtime" icon={<NightsStayIcon />} />
-      <BottomNavigationAction label="Wake-up" icon={<WbSunnyIcon />} />
+      <BottomNavigationAction label="Home" icon={<ScreenRotationIcon />} />
+      <BottomNavigationAction label="Bedtijd" icon={<NightsStayIcon />} />
+      <BottomNavigationAction label="Opstaan" icon={<WbSunnyIcon />} />
       <BottomNavigationAction label="Controls" icon={<TuneIcon />} onClick={toggleDrawer('bottom', true)} />
       </BottomNavigation>
       <Drawer anchor='bottom' open={drawer} onClose={toggleDrawer('bottom', false)}>

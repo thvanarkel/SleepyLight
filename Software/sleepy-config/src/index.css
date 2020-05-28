@@ -11,3 +11,34 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.loginPage {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.login {
+  width: 100vw;
+  padding: 30px;
+}
+
+.login > h1 {
+  color: white;
+  margin-block-end: 0.3em;
+}
+
+.login > p {
+   color: white;
+   margin-block-start: 0;
+   margin-block-end: 2.5em;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+form > div {
+  margin-bottom: 10px !important;
+}

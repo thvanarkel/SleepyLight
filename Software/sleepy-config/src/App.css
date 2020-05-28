@@ -6,13 +6,21 @@ html {
 body {
     height: 100%;
     overflow: auto;
+    background: rgb(34,45,102);
+    background: linear-gradient(0deg, rgba(34,45,102,1) 40%, rgba(84,99,173,1) 100%);
+}
+
+h1 {
+  margin: 0;
+  margin-bottom: 40px;
+  align-self: flex-start;
 }
 
 .App {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  text-align: center;
+  /* text-align: center; */
   min-height: 100vh;
   height: 100%;
   overflow: hidden;
@@ -30,33 +38,54 @@ body {
 }
 
 .screen {
-  background: rgb(34,45,102);
-  background: linear-gradient(0deg, rgba(34,45,102,1) 40%, rgba(84,99,173,1) 100%);
+
   /* min-height: 100vh; */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  /* align-items: center; */
+  /* justify-content: center; */
+  min-height: 850px;
+  height: calc(100vh - 76px);
   font-size: calc(10px + 2vmin);
   color: white;
   padding: 20px;
-  flex: 1;
+  /* padding-bottom: 76px; */
+
 }
 
-.MuiBottomNavigation-root button {
+.controls {
+  /* display: flex; */
+  padding: 30px;
+}
+
+.MuiBottomNavigation-root {
   /* align-self: flex-end; */
   /* background-color: #3068ad; */
+  padding-bottom: 20px;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.MuiFormControlLabel-labelPlacementTop {
+  margin-left: 2px !important;
+
+}
+
+.MuiPickersStaticWrapper-staticWrapperRoot {
+  margin: -20px !important;
+}
+
+.MuiPickersBasePicker-container {
+  display: flex;
+  align-items: center;
+}
+
+.MuiPickersToolbar-toolbar {
+  width: 100%;
 }
 
 .App-link {
   color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }

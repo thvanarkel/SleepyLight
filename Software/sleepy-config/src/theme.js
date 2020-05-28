@@ -16,10 +16,10 @@ const theme = createMuiTheme({
         // backgroundColor: "#26346d"
       }
     },
-    MuiBottomNavigationAction: {
-      // root: {
-        // color: "#ffffff"
-      // }
+    MuiFormControlLabel: {
+      root: {
+        marginRight: 0
+      }
     }
   }
 })

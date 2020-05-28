@@ -8,7 +8,14 @@
 
 enum LampMode {
   SOLID,
-  COOLDOWN
+  MOVING
+};
+
+enum Orientation {
+  NONE = 0,
+  UPWARD = 1,
+  DOWNWARD = 2,
+  
 };
 
 class Lamp {
@@ -17,18 +24,22 @@ class Lamp {
     void tick();
     void turnOn(int t);
     void turnOff(int t);
+    void setLevel(int l, int t);
+    void changeTime(int t);
+    boolean inAnimation();
     int level;
-    LampMode mode;
-    boolean orientedUpwards;
+    unsigned long endTime;
+    LampMode mode = SOLID;
+    Orientation orientation = UPWARD;
   private:
     int _numSides;
     int _ledsPerSide;
-    int _updateFrequency = 20;
+    int _updateFrequency = 25;
     unsigned long _lastUpdate;
     int startLevel;
     int endLevel;
     unsigned long startTime;
-    unsigned long endTime;
+    
     unsigned long _now;
     CRGB * leds;
 
