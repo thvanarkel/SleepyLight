@@ -41,7 +41,11 @@ export default function PageBedtime() {
 
   const weekDays = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
-
+  React.useEffect(() => {
+    if (!client.isConnected()) {
+      window.location.reload(true);
+    }
+  })
 
   const setAlarm = () => {
     let msg = ""

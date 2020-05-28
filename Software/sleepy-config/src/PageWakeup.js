@@ -37,6 +37,12 @@ export default function PageHome() {
       'zo': false
     }), "wakeDays" );
 
+  React.useEffect(() => {
+    if (!client.isConnected()) {
+      window.location.reload(true);
+    }
+  })
+
   const weekDays = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 
   const setAlarm = () => {
