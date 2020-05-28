@@ -47,7 +47,7 @@ struct Config {
 };
 
 
-#define NUM_CONFIGS 9
+#define NUM_CONFIGS 10
 
 Config defaultConfig[NUM_CONFIGS] = {
   {"bedtimedays", "000000"},
@@ -217,8 +217,6 @@ void loadConfig() {
     myFile = SD.open("setting.cfg", FILE_WRITE);
     writeDefaultConfig(myFile);
     myFile.close();
-  } else {
-    client.publish("/config", "file does exist");
   }
   // Load the configuration
   while ( !(sdcc.set("setting.cfg", 4, processCmd)) ) {}
@@ -328,12 +326,12 @@ void loop() {
   detectMovement();
   lamp.orientation = orientation;
 
-  unsigned long n = millis();
-  if ((n - prev > interval)) {
-    DateTime now = rtc.now();
-    publishDate("/time", now);
-    prev = n;
-  }
+//  unsigned long n = millis();
+//  if ((n - prev > interval)) {
+//    DateTime now = rtc.now();
+//    publishDate("/time", now);
+//    prev = n;
+//  }
 
   updateStateMachine();
 
