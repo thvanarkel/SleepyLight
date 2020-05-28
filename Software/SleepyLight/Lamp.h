@@ -8,7 +8,7 @@
 
 enum LampMode {
   SOLID,
-  COOLDOWN
+  MOVING
 };
 
 enum Orientation {
@@ -29,7 +29,7 @@ class Lamp {
     boolean inAnimation();
     int level;
     unsigned long endTime;
-    LampMode mode;
+    LampMode mode = SOLID;
     Orientation orientation = UPWARD;
   private:
     int _numSides;

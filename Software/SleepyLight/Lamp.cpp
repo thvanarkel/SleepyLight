@@ -19,34 +19,37 @@ Lamp::Lamp(int numSides, int ledsPerSide)
 
 void Lamp::tick() {
   if (millis() - _lastUpdate > _updateFrequency) {
-    _now = millis();
-    _now = constrain(_now, startTime, endTime);
 
-    
-    
-    level = map(_now, startTime, endTime, startLevel, endLevel);
-    level = constrain(level, 0, 1023);
-//
-//    Serial.print(level);
-//    Serial.print(": ");
-//    Serial.print(_now);
-//    Serial.print(" ");
-//    Serial.print(startTime);
-//    Serial.print(" ");
-//    Serial.print(endTime);
-//    Serial.print(" ");
-//    Serial.print(startLevel);
-//    Serial.print(" ");
-//    Serial.println(endLevel);
-//    
-    for (int i = 0; i < _ledsPerSide; i++) {
-//      int v = ((level/1023.0) * 255) - (80 * exp(-(0.00099 * (1.25 * i + 1)) * level));
-      float v = ((constrain(1.4 * (i + 1) * level, 0, 1023)/1023) * 255);
-      float s = (170 - (constrain((2.4 * level), 0, 1023)/1023 * 80));
-//      float v = (level/1023.0) * 255;
-//      mapLEDs(i, 20, 80 + 140 * exp( -0.005 * level), constrain(v, 0, 255));
-      mapLEDs(i, 20, constrain(s, 0, 255), constrain(v, 0, 255));
-       
+    if (mode == SOLID) {
+      _now = millis();
+      _now = constrain(_now, startTime, endTime);
+      level = map(_now, startTime, endTime, startLevel, endLevel);
+      level = constrain(level, 0, 1023);
+      //
+      //    Serial.print(level);
+      //    Serial.print(": ");
+      //    Serial.print(_now);
+      //    Serial.print(" ");
+      //    Serial.print(startTime);
+      //    Serial.print(" ");
+      //    Serial.print(endTime);
+      //    Serial.print(" ");
+      //    Serial.print(startLevel);
+      //    Serial.print(" ");
+      //    Serial.println(endLevel);
+      //
+      for (int i = 0; i < _ledsPerSide; i++) {
+        //      int v = ((level/1023.0) * 255) - (80 * exp(-(0.00099 * (1.25 * i + 1)) * level));
+        float v = ((constrain(1.4 * (i + 1) * level, 0, 1023) / 1023) * 255);
+        float s = (170 - (constrain((2.4 * level), 0, 1023) / 1023 * 80));
+        //      float v = (level/1023.0) * 255;
+        //      mapLEDs(i, 20, 80 + 140 * exp( -0.005 * level), constrain(v, 0, 255));
+        mapLEDs(i, 20, constrain(s, 0, 255), constrain(v, 0, 255));
+      }
+    } else if (mode == MOVING) {
+      for (int i = 0; i < _ledsPerSide; i++) {
+        mapLEDs(i, 20, 90, beatsin8(13, 0, 255, 0, i * 3));
+      }
     }
 
     FastLED.show();
