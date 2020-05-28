@@ -603,14 +603,11 @@ void messageReceived(String &topic, String &payload) {
 }
 
 void setSound(int index) {
-  currentSound = getConfig("currentsound").toInt();
-  if (currentSound != index) {
-    currentSound = index;
-    setConfig("sound", String(currentSound));
-    waveFile = SDWaveFile(sounds[currentSound].filename);
-    if (!waveFile) {
-      client.publish("/error", "wave file invalid");
-    }
+  currentSound = index;
+  setConfig("sound", String(currentSound));
+  waveFile = SDWaveFile(sounds[currentSound].filename);
+  if (!waveFile) {
+    client.publish("/error", "wave file invalid");
   }
 }
 
