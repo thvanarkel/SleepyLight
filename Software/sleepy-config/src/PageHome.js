@@ -12,6 +12,11 @@ import help01 from './images/help01.png'
 import help02 from './images/help02.png'
 import help03 from './images/help03.png'
 
+import flow01 from './images/flow01.png'
+import flow02 from './images/flow02.png'
+import flow03 from './images/flow03.png'
+import flow04 from './images/flow04.png'
+
 
 export default function PageHome() {
   const [drawer, setDrawer] = React.useState(false);
@@ -53,9 +58,18 @@ export default function PageHome() {
       <IconButton color="primary" aria-label="add to shopping cart" onClick={toggleDrawer('top', true)}>
         <HelpOutline />
       </IconButton>
+
       <Drawer anchor='top' open={drawer} onClose={toggleDrawer('top', false)}>
         {list()}
       </Drawer>
+      </div>
+      <div className="slider">
+      <AwesomeSlider bullets={true} organicArrows={true}>
+        <div><img src={flow01}/></div>
+        <div><img src={flow02}/></div>
+        <div><img src={flow03}/></div>
+        <div><img src={flow04}/></div>
+      </AwesomeSlider>
       </div>
     </div>
   );

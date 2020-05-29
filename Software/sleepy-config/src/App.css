@@ -86,7 +86,7 @@ h1 {
 
 .awssld__container {
   /* height: 100% !important; */
-  min-height: 400px;
+  min-height: 250px;
 
 }
 
@@ -98,6 +98,16 @@ h1 {
 .awssld__content img {
   margin-left: 5%;
   width: 90%;
+  /* min-height: 667px; */
+}
+
+.slider .awssld__content {
+  background: none !important;
+}
+
+.slider .awssld__content img {
+  width: 100%;
+  margin-left: -20px;
   /* min-height: 667px; */
 }
 
