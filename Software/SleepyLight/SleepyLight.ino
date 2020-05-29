@@ -138,10 +138,8 @@ State lastState;
 
 void setup() {
   // put your setup code here, to run once:
-//  Serial.begin(115200);
-//  Serial.print("connecting");
-//  watchdog.setup(WDT_SOFTCYCLE32S);
-
+  //  Serial.begin(115200);
+  //  Serial.print("connecting");
   while (status != WL_CONNECTED) {
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
     status = WiFi.begin(ssid, pass);
@@ -159,7 +157,6 @@ void setup() {
   if (!rtc.begin()) {
     client.publish("/error", "Couldn't find RTC");
   }
-  //
   if (rtc.lostPower()) {
     client.publish("/error", "RTC lost power, let's set the time!");
     rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
@@ -171,7 +168,7 @@ void setup() {
     //    return;
   }
 
-//   SD.remove("setting.cfg"); // Delete configuration file
+  //   SD.remove("setting.cfg"); // Delete configuration file
   // check config
   loadConfig();
 
@@ -184,7 +181,6 @@ void setup() {
   AudioOutI2S.volume(60);
   if (!AudioOutI2S.canPlay(waveFile)) {
     client.publish("/error", "unable to play wave file using I2S!");
-    //    while (1); // do nothing
   }
 
   // Initialise shutdown pin speaker
@@ -197,10 +193,11 @@ void setup() {
 
   ArduinoOTA.begin(WiFi.localIP(), "Arduino", "password", InternalStorage);
 
-
   updateOrientation();
-  detectTurn(orientation);
+  // set the initial orientation
+  orientation = getOrientation();
   lamp.orientation = orientation;
+  client.publish("/orientation", String(orientation));
 
   client.publish("/state", String(currentState));
   lastState = currentState;
@@ -224,7 +221,7 @@ void loadConfig() {
   while ( !(sdcc.set("setting.cfg", 4, processCmd)) ) {}
 
   sdcc.readConfig();
-  
+
 }
 
 void writeDefaultConfig(File file) {
@@ -268,7 +265,7 @@ void processCmd() {
     configuration[cIndex].value = v;
     cIndex++;
   }
-  
+
 }
 
 
@@ -299,7 +296,7 @@ void connect() {
 boolean disconnected = false;
 
 void loop() {
-//  watchdog.clear();
+  //  watchdog.clear();
   ArduinoOTA.poll();
   lamp.tick();
   //  Serial.println(lamp.level);
@@ -332,12 +329,12 @@ void loop() {
   detectMovement();
   lamp.orientation = orientation;
 
-//  unsigned long n = millis();
-//  if ((n - prev > interval)) {
-//    DateTime now = rtc.now();
-//    publishDate("/time", now);
-//    prev = n;
-//  }
+  //  unsigned long n = millis();
+  //  if ((n - prev > interval)) {
+  //    DateTime now = rtc.now();
+  //    publishDate("/time", now);
+  //    prev = n;
+  //  }
 
   updateStateMachine();
 
@@ -352,16 +349,10 @@ void updateStateMachine() {
       if (detectTurn(orientation)) {
         lamp.orientation = orientation;
         lamp.turnOn(2000);
-        didTurn = true;
+        client.publish("/orientation", String(orientation));
+        currentState = UNWINDING;
       }
-      // If the lamp is turned and fully on, transition to next state
-      if (didTurn) {
-        if (lamp.level >= 1023) {
-          didTurn = false;
-          currentState = UNWINDING;
-          lamp.turnOff(getConfig("unwinddecay").toInt() * 60 * 1000);
-        } // TODO: Turn this into a function
-      }
+
       // Check if the wake-up alarm has fired
       if (rtc.alarmFired(1)) {
         rtc.clearAlarm(1);
@@ -398,14 +389,17 @@ void updateStateMachine() {
       }
       break;
 
-    case UNWINDING:
+    case UNWINDING:        
       if (!lamp.inAnimation()) {
-        currentState = LIGHT_IDLE;
+        if (lamp.level >= 1023) {
+          lamp.turnOff(getConfig("unwinddecay").toInt() * 60 * 1000);
+        } else if (lamp.level <= 0) {
+          currentState = LIGHT_IDLE;
+        }
       }
       if (nShakes > 3) {
         nShakes = 0;
         lamp.changeTime((-60 * 1000));
-        client.publish("/endtime", String(lamp.endTime));
       }
       break;
 
@@ -414,8 +408,6 @@ void updateStateMachine() {
         rtc.clearAlarm(1);
         playSound();
         nShakes = 0;
-        // TODO: set the alarm for the next day!
-        // TODO: check for calendar days
         currentState = ALARMED;
       }
       break;
@@ -439,6 +431,7 @@ void updateStateMachine() {
       if (detectTurn(orientation)) {
         stopSound();
         lamp.orientation = orientation;
+        client.publish("/orientation", String(orientation));
         lamp.turnOff(2000);
         nextAlarm(true);
         currentState = LIGHT_IDLE;
@@ -457,6 +450,12 @@ void updateStateMachine() {
       if (nShakes > 2) {
         lamp.setLevel(slumberIntensity, 500);
         nShakes = 0;
+      }
+      if (detectTurn(orientation)) {
+        lamp.orientation = orientation;
+        lamp.turnOn(2000);
+        client.publish("/orientation", String(orientation));
+        currentState = UNWINDING;
       }
       break;
   }
@@ -487,7 +486,7 @@ void setAlarm(String str, boolean wakeup) {
   DateTime now = rtc.now();
   DateTime a(now.year(), now.month(), now.day(), getValue(str, ':', 0).toInt(), getValue(str, ':', 1).toInt(), 0);
   if (now < a) {
-    // Still do the alarm today  
+    // Still do the alarm today
     char theDay;
     if (wakeup) {
       char wd[8];
@@ -540,7 +539,7 @@ void nextAlarm(boolean wakeup)
     } else {
       foundNext = true;
       DateTime n = a + TimeSpan(i, 0, 0, 0);
-      DateTime future; 
+      DateTime future;
       if (wakeup) {
         future = n - TimeSpan(0, 0, getConfig("awakeningtime").toInt(), 0);
         rtc.setAlarm1(future, DS3231_A1_Date);

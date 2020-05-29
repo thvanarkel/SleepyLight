@@ -11,19 +11,20 @@ float pPitch, pRoll;
 unsigned long last;
 
 boolean detectTurn(Orientation lastOrientation) {
-  Orientation currentOrientation;
-  
-  if (pitch < 0) {
-    currentOrientation = UPWARD;
-  } else if (pitch > 0) {
-    currentOrientation = DOWNWARD;
-  }
+  Orientation currentOrientation = getOrientation();
   orientation = currentOrientation;
-  
   if (lastOrientation != NONE) {
     return (currentOrientation != lastOrientation);
   } else {
     return false;
+  }
+}
+
+Orientation getOrientation() {
+  if (pitch < 0) {
+    return UPWARD;
+  } else if (pitch > 0) {
+    return DOWNWARD;
   }
 }
 
