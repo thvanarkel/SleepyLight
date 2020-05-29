@@ -86,12 +86,19 @@ h1 {
 
 .awssld__container {
   /* height: 100% !important; */
-  min-height: 425px;
+  min-height: 400px;
+
+}
+
+.awssld__content {
+  background: rgb(34,45,102);
+  background: linear-gradient(0deg, rgba(34,45,102,1) 40%, rgba(84,99,173,1) 100%);
 }
 
 .awssld__content img {
-  width: 80vw;
-  min-height: 667px;
+  margin-left: 5%;
+  width: 90%;
+  /* min-height: 667px; */
 }
 
 .controls {
