@@ -169,6 +169,7 @@ export default function PageHome() {
         <Select
           value={sound}
           onChange={handleSound}
+          onClose={handleSound}
           displayEmpty
         >
           <MenuItem value={0}>Birdsong</MenuItem>
