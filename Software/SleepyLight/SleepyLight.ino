@@ -1,4 +1,3 @@
-#include <Adafruit_SleepyDog.h>
 #include <WiFiNINA.h>
 #include <ArduinoOTA.h>
 #include "Lamp.h"
@@ -139,10 +138,9 @@ State lastState;
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(115200);
-  Serial.print("connecting");
-
-  int countdownMS = Watchdog.enable(60000);
+//  Serial.begin(115200);
+//  Serial.print("connecting");
+//  watchdog.setup(WDT_SOFTCYCLE32S);
 
   while (status != WL_CONNECTED) {
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
@@ -301,7 +299,7 @@ void connect() {
 boolean disconnected = false;
 
 void loop() {
-  Watchdog.reset();
+//  watchdog.clear();
   ArduinoOTA.poll();
   lamp.tick();
   //  Serial.println(lamp.level);
@@ -310,6 +308,7 @@ void loop() {
     connect();
   }
   client.loop();
+
 
   if (!AudioOutI2S.isPlaying()) {
     // playback has stopped
@@ -342,12 +341,13 @@ void loop() {
 
   updateStateMachine();
 
-  delay(10);
+  delay(15);
 }
 
 void updateStateMachine() {
   switch (currentState) {
     case LIGHT_IDLE:
+
       // Check if the lamp is turned
       if (detectTurn(orientation)) {
         lamp.orientation = orientation;
@@ -393,6 +393,7 @@ void updateStateMachine() {
       breakOffSound(8);
       if (nShakes > 0 || millis() - reminded > 60000) {
         lamp.mode = SOLID;
+        stopSound();
         currentState = LIGHT_IDLE;
       }
       break;
@@ -457,9 +458,7 @@ void updateStateMachine() {
         lamp.setLevel(slumberIntensity, 500);
         nShakes = 0;
       }
-
       break;
-
   }
 }
 
@@ -598,13 +597,13 @@ void messageReceived(String &topic, String &payload) {
   } else if (topic.equals("/snooze")) {
     setConfig("snooze", payload);
   } else if (topic.equals("/sound")) {
+    setConfig("currentsound", payload);
     setSound(payload.toInt());
   }
 }
 
 void setSound(int index) {
   currentSound = index;
-  setConfig("sound", String(currentSound));
   waveFile = SDWaveFile(sounds[currentSound].filename);
   if (!waveFile) {
     client.publish("/error", "wave file invalid");
@@ -619,7 +618,7 @@ void playSound() {
 
 void breakOffSound(int cutoff) {
   if (millis() - startedPlaying > ((sounds[currentSound].duration - cutoff) * 1000)) {
-    AudioOutI2S.stop();
+    stopSound();
   }
 }
 

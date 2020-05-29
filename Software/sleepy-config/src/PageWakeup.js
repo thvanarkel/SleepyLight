@@ -168,7 +168,7 @@ export default function PageHome() {
       <FormControl>
         <Select
           value={sound}
-          onChange={handleSound}
+          onClose={handleSound}
           displayEmpty
         >
           <MenuItem value={0}>Birdsong</MenuItem>

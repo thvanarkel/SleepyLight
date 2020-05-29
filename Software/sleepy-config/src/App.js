@@ -20,6 +20,7 @@ function App() {
 
   React.useEffect(() => {
     if (!client.isConnected()) {
+      client.connect();
       setAuthenticated(false);
       // window.location.reload(true);
     }
