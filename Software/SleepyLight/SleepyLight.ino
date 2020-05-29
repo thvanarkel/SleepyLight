@@ -115,7 +115,8 @@ SDWaveFile waveFile;
 
 unsigned long reminded;
 
-Orientation orientation = NONE;
+Orientation orientation;
+Orientation lOrientation;
 boolean didTurn;
 int nShakes;
 
@@ -226,7 +227,7 @@ void loadConfig() {
   while ( !(sdcc.set("setting.cfg", 4, processCmd)) ) {}
 
   sdcc.readConfig();
-  
+
 }
 
 void writeDefaultConfig(File file) {
@@ -270,7 +271,7 @@ void processCmd() {
     configuration[cIndex].value = v;
     cIndex++;
   }
-  
+
 }
 
 
@@ -321,11 +322,13 @@ void loop() {
     client.publish("/state", String(currentState));
     lastState = currentState;
   }
+  if (orientation != lOrientation) {
+    client.publish("/orientation", String(currentState));
+    lOrientation = orientation;
+  }
 
   if (millis() - lastUpdate > 1000) {
     client.publish("/ledLevel", String(lamp.level));
-
-    //    client.publish("/orientation", String(orientation));
     lastUpdate = millis();
   }
 
@@ -352,15 +355,7 @@ void updateStateMachine() {
       if (detectTurn(orientation)) {
         lamp.orientation = orientation;
         lamp.turnOn(2000);
-        didTurn = true;
-      }
-      // If the lamp is turned and fully on, transition to next state
-      if (didTurn) {
-        if (lamp.level >= 1023) {
-          didTurn = false;
-          currentState = UNWINDING;
-          lamp.turnOff(getConfig("unwinddecay").toInt() * 60 * 1000);
-        } // TODO: Turn this into a function
+        currentState = UNWINDING;
       }
       // Check if the wake-up alarm has fired
       if (rtc.alarmFired(1)) {
@@ -373,7 +368,7 @@ void updateStateMachine() {
       }
       if (rtc.alarmFired(2)) {
         rtc.clearAlarm(2);
-        nextAlarm(false);
+
         setSound(5);
         playSound();
         reminded = millis();
@@ -394,6 +389,7 @@ void updateStateMachine() {
       if (nShakes > 0 || millis() - reminded > 60000) {
         lamp.mode = SOLID;
         currentState = LIGHT_IDLE;
+        nextAlarm(false);
       }
       break;
 
@@ -457,7 +453,11 @@ void updateStateMachine() {
         lamp.setLevel(slumberIntensity, 500);
         nShakes = 0;
       }
-
+      if (detectTurn(orientation)) {
+        lamp.orientation = orientation;
+        lamp.turnOn(2000);
+        currentState = UNWINDING;
+      }
       break;
 
   }
@@ -488,7 +488,7 @@ void setAlarm(String str, boolean wakeup) {
   DateTime now = rtc.now();
   DateTime a(now.year(), now.month(), now.day(), getValue(str, ':', 0).toInt(), getValue(str, ':', 1).toInt(), 0);
   if (now < a) {
-    // Still do the alarm today  
+    // Still do the alarm today
     char theDay;
     if (wakeup) {
       char wd[8];
@@ -541,7 +541,7 @@ void nextAlarm(boolean wakeup)
     } else {
       foundNext = true;
       DateTime n = a + TimeSpan(i, 0, 0, 0);
-      DateTime future; 
+      DateTime future;
       if (wakeup) {
         future = n - TimeSpan(0, 0, getConfig("awakeningtime").toInt(), 0);
         rtc.setAlarm1(future, DS3231_A1_Date);

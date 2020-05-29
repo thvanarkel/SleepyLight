@@ -12,19 +12,14 @@ unsigned long last;
 
 boolean detectTurn(Orientation lastOrientation) {
   Orientation currentOrientation;
-  
+
   if (pitch < 0) {
     currentOrientation = UPWARD;
   } else if (pitch > 0) {
     currentOrientation = DOWNWARD;
   }
   orientation = currentOrientation;
-  
-  if (lastOrientation != NONE) {
-    return (currentOrientation != lastOrientation);
-  } else {
-    return false;
-  }
+  return (currentOrientation != lastOrientation);
 }
 
 unsigned long shakeDebounce;
@@ -42,7 +37,7 @@ void detectMovement() {
       shakeDebounce = millis();
       client.publish("/shakes", String(nShakes));
     }
-    
+
 //    delay(75);
   }
   if (millis() - lastShake > SHAKE_RESET) {
@@ -54,15 +49,15 @@ void updateOrientation() {
   pPitch = pitch;
   pRoll = roll;
 
-  
-  
+
+
   if (IMU.accelerationAvailable() && IMU.gyroscopeAvailable()) {
     IMU.readAcceleration(ax, ay, az);
     IMU.readGyroscope(gx, gy, gz);
     float gyroScale = 0.097656f / 4.5;
     gx = gx * gyroScale;
     gy = gy * gyroScale;
-    gz = gz * gyroScale;    
+    gz = gz * gyroScale;
   }
   deltat = fusion.deltatUpdate(); //this have to be done before calling the fusion update
   fusion.MahonyUpdate(gx, gy, gz, ax, ay, az, deltat);

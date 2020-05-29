@@ -56,7 +56,7 @@ export default function TimeSlider(props) {
             onChangeCommitted={(e, v) => { props.onChangeCommitted(v) }}
             aria-labelledby="continuous-slider"
             step={null}
-            min={props.min ? props.min : 0 }
+            min={props.min ? props.min : 1 }
             max={props.max ? props.max: 60}
             marks={props.marks ? props.marks : marks}
             valueLabelDisplay="auto"
