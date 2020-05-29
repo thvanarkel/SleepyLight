@@ -114,7 +114,7 @@ SDWaveFile waveFile;
 
 unsigned long reminded;
 
-Orientation orientation = NONE;
+Orientation orientation;
 boolean didTurn;
 int nShakes;
 
@@ -385,6 +385,7 @@ void updateStateMachine() {
       if (nShakes > 0 || millis() - reminded > 60000) {
         lamp.mode = SOLID;
         stopSound();
+        currentSound = getConfig("currentsound").toInt();
         currentState = LIGHT_IDLE;
       }
       break;
@@ -435,6 +436,7 @@ void updateStateMachine() {
         lamp.turnOff(2000);
         nextAlarm(true);
         currentState = LIGHT_IDLE;
+        nShakes = 0;
         break;
       }
       break;
