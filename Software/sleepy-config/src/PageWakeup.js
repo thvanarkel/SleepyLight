@@ -168,6 +168,7 @@ export default function PageHome() {
       <FormControl>
         <Select
           value={sound}
+          onChange={handleSound}
           onClose={handleSound}
           displayEmpty
         >

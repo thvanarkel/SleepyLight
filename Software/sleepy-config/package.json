@@ -15,6 +15,7 @@
     "object.omit": "^3.0.0",
     "paho-mqtt": "^1.1.0",
     "react": "^16.13.1",
+    "react-awesome-slider": "^4.1.0",
     "react-dom": "^16.13.1",
     "react-native-paho-mqtt": "^0.1.1",
     "react-paho-mqtt": "^1.0.1",

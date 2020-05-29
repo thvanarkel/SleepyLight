@@ -12,7 +12,7 @@ body {
 
 h1 {
   margin: 0;
-  margin-bottom: 40px;
+  /* margin-bottom: 40px; */
   align-self: flex-start;
 }
 
@@ -51,6 +51,47 @@ h1 {
   padding: 20px;
   /* padding-bottom: 76px; */
 
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+
+}
+
+.awssld {
+--slider-height-percentage: 60% !important;
+--slider-transition-duration: 700ms !important;
+--organic-arrow-thickness: 3px !important;
+--organic-arrow-border-radius: 0px !important;
+--organic-arrow-height: 20px !important;
+--organic-arrow-color: #ffffff !important;
+--control-button-width: 5% !important;
+--control-button-height: 5% !important;
+--control-button-background: transparent !important;
+--control-bullet-color: #ffffff !important;
+--control-bullet-active-color: #ebebeb !important;
+--loader-bar-color: #851515 !important;
+--loader-bar-height: 6px !important;
+}
+
+.awssld__bullets {
+  bottom: -25px !important;
+}
+
+.awssld__bullets button {
+  height: 8px !important;
+  width: 8px !important;
+}
+
+.awssld__container {
+  /* height: 100% !important; */
+  min-height: 425px;
+}
+
+.awssld__content img {
+  width: 80vw;
+  min-height: 667px;
 }
 
 .controls {

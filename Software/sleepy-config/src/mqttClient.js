@@ -1,5 +1,4 @@
 import * as mqtt from 'react-paho-mqtt'
-import os from 'os';
 
 let client;
 let callback;
@@ -12,7 +11,6 @@ const init = () => {
 const connect = (params) => {
   if (params) props = params;
   client.connect(params);
-  console.log(client);
 }
 
 const publish = (topic, payload) => {
