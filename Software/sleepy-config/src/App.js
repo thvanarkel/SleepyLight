@@ -1,12 +1,14 @@
 import React from 'react'
 import Main from './Main';
 import Authentication from './Authentication'
+import { useStateWithLocalStorage } from './utils/persistenceHelpers.js'
 
 import client from './mqttClient.js'
 
 function App() {
   let [authenticated, setAuthenticated] = React.useState(false);
   const [error, setError] = React.useState(false);
+  const [first, setFirst] = useStateWithLocalStorage('firstLaunch', 0)
 
   const connect = (u, p) => {
     client.connect({
@@ -20,6 +22,7 @@ function App() {
 
   React.useEffect(() => {
     if (!client.isConnected()) {
+      client.connect();
       setAuthenticated(false);
       // window.location.reload(true);
     }

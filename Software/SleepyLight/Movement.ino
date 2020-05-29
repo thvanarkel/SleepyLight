@@ -22,6 +22,14 @@ boolean detectTurn(Orientation lastOrientation) {
   return (currentOrientation != lastOrientation);
 }
 
+Orientation getOrientation() {
+  if (pitch < 0) {
+    return UPWARD;
+  } else if (pitch > 0) {
+    return DOWNWARD;
+  }
+}
+
 unsigned long shakeDebounce;
 unsigned long lastShake;
 

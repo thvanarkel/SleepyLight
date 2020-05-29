@@ -1,16 +1,16 @@
 import * as mqtt from 'react-paho-mqtt'
-import os from 'os';
 
 let client;
 let callback;
+let props;
 
 const init = () => {
   client = mqtt.connect("broker.shiftr.io", Number(443), "configurator", _onConnectionLost, onMessageArrived)
 }
 
 const connect = (params) => {
+  if (params) props = params;
   client.connect(params);
-  console.log(client);
 }
 
 const publish = (topic, payload) => {
