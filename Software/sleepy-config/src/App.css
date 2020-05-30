@@ -1,5 +1,12 @@
-html, body {
-    overscroll-behavior: none;
+html,
+body {
+ height: 100%;
+ margin: 0;
+ overflow: hidden;
+}
+.App {
+ overflow: auto;
+ height: 100%;
 }
 
 body {
