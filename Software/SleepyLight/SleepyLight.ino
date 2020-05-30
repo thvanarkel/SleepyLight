@@ -371,7 +371,6 @@ void updateStateMachine() {
       }
       if (rtc.alarmFired(2)) {
         rtc.clearAlarm(2);
-        
         setSound(5);
         playSound();
         reminded = millis();
@@ -398,7 +397,7 @@ void updateStateMachine() {
       }
       break;
 
-    case UNWINDING:        
+    case UNWINDING:
       if (!lamp.inAnimation()) {
         if (lamp.level >= 1023) {
           lamp.turnOff(getConfig("unwinddecay").toInt() * 60 * 1000);
