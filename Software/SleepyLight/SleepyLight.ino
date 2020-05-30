@@ -162,7 +162,7 @@ void setup() {
     //    return;
   }
 
-  //   SD.remove("setting.cfg"); // Delete configuration file
+//  SD.remove("setting.cfg"); // Delete configuration file
   // check config
   loadConfig();
 
@@ -197,7 +197,7 @@ void setup() {
     Serial.println("Failed to initialize IMU!");
   }
 
-  ArduinoOTA.begin(WiFi.localIP(), "Arduino", "password", InternalStorage);
+  ArduinoOTA.begin(WiFi.localIP(), "SleepyLight", OTA_PASSWORD, InternalStorage);
 
   updateOrientation();
   // set the initial orientation
@@ -296,6 +296,7 @@ void connect() {
   client.subscribe("/unwindTime");
   client.subscribe("/slumberTime");
   client.subscribe("/sound");
+  client.subscribe("/snooze");
   //  client.subscribe("/ledLevel");
 }
 
@@ -371,6 +372,7 @@ void updateStateMachine() {
       }
       if (rtc.alarmFired(2)) {
         rtc.clearAlarm(2);
+        
         setSound(5);
         playSound();
         reminded = millis();
@@ -397,7 +399,7 @@ void updateStateMachine() {
       }
       break;
 
-    case UNWINDING:
+    case UNWINDING:        
       if (!lamp.inAnimation()) {
         if (lamp.level >= 1023) {
           lamp.turnOff(getConfig("unwinddecay").toInt() * 60 * 1000);
