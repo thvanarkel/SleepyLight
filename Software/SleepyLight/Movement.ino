@@ -11,13 +11,7 @@ float pPitch, pRoll;
 unsigned long last;
 
 boolean detectTurn(Orientation lastOrientation) {
-  Orientation currentOrientation;
-
-  if (pitch < 0) {
-    currentOrientation = UPWARD;
-  } else if (pitch > 0) {
-    currentOrientation = DOWNWARD;
-  }
+  Orientation currentOrientation = getOrientation();
   orientation = currentOrientation;
   return (currentOrientation != lastOrientation);
 }
@@ -39,7 +33,6 @@ unsigned long lastShake;
 void detectMovement() {
   if (roll - pRoll > SHAKE_SENSITIVITY || pitch - pPitch > SHAKE_SENSITIVITY) {
     if (millis() - shakeDebounce > 75) {
-      Serial.println("--shake--");
       nShakes++;
       lastShake = millis();
       shakeDebounce = millis();

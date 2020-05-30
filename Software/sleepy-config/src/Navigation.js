@@ -59,7 +59,7 @@ export default function Navigation(props) {
       <BottomNavigationAction label="Home" icon={<ScreenRotationIcon />} />
       <BottomNavigationAction label="Bedtijd" icon={<NightsStayIcon />} />
       <BottomNavigationAction label="Opstaan" icon={<WbSunnyIcon />} />
-      <BottomNavigationAction label="Controls" icon={<TuneIcon />} onClick={toggleDrawer('bottom', true)} />
+      <BottomNavigationAction label="Instellingen" icon={<TuneIcon />} onClick={toggleDrawer('bottom', true)} />
       </BottomNavigation>
       <Drawer anchor='bottom' open={drawer} onClose={toggleDrawer('bottom', false)}>
         {list()}

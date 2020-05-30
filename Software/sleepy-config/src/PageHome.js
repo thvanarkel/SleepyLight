@@ -42,7 +42,7 @@ export default function PageHome() {
       onKeyDown={toggleDrawer(false)}
     >
     <Box mb={4}>
-    <AwesomeSlider bullets={true} organicArrows={true}>
+    <AwesomeSlider bullets={true} organicArrows={false}>
       <div><img src={help01}/></div>
       <div><img src={help02}/></div>
       <div><img src={help03}/></div>
@@ -64,7 +64,7 @@ export default function PageHome() {
       </Drawer>
       </div>
       <div className="slider">
-      <AwesomeSlider bullets={true} organicArrows={true}>
+      <AwesomeSlider bullets={true} organicArrows={false}>
         <div><img src={flow01}/></div>
         <div><img src={flow02}/></div>
         <div><img src={flow03}/></div>

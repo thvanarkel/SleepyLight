@@ -59,7 +59,7 @@ export default function TimeSlider(props) {
             min={props.min ? props.min : 1 }
             max={props.max ? props.max: 60}
             marks={props.marks ? props.marks : marks}
-            valueLabelDisplay="auto"
+            valueLabelDisplay={props.display ? props.display : "auto"}
             />
     </div>
   )

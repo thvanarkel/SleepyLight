@@ -66,10 +66,6 @@ export default function Controls() {
 
   return (
     <div className="controls">
-    <FormControlLabel
-      control={<Switch checked={on} onChange={turnOn} name="turnedOn" />}
-      label="Light on?"
-    />
     <TimeSlider
         value={parseInt(slumber)}
         onChange={setSlumber}
@@ -77,8 +73,9 @@ export default function Controls() {
         title="Nachtstand"
         description="Tijd voordat de lamp in nachtstand uitgaat"
         marks={marks}
-        min={0}
-        max={450}/>
+        min={30}
+        max={450}
+        display="off"/>
     </div>
   )
 }

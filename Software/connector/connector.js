@@ -3,25 +3,27 @@ const dotenv = require('dotenv').config()
 const path = require('path')
 const fs = require('fs')
 const csv = require('fast-csv')
-// const {
-// 	InfluxDB,
-// 	Point,
-// 	FluxTableMetaData
-// } = require('@influxdata/influxdb-client')
+const {
+	InfluxDB,
+	Point,
+	FluxTableMetaData
+} = require('@influxdata/influxdb-client')
 const {
 	hostname,
 	homedir
 } = require('os')
+
+const thingName = "lamp";
 
 const cron = require('node-cron');
 
 // const directory = '/media/pi/' + hostname() + '/interaction-data';
 const directory = homedir + '/interaction-data/';
 
-// const dbClient = new InfluxDB({
-// 	url: process.env.HOST,
-// 	token: process.env.TOKEN
-// })
+const dbClient = new InfluxDB({
+	url: process.env.HOST,
+	token: process.env.TOKEN
+})
 
 class Thing {
 	static write(filestream, rows, options) {
@@ -86,16 +88,22 @@ class Thing {
 		}
 
 		// Push points to the InfluxDB
-		// const writeApi = dbClient.getWriteApi(process.env.ORG, process.env.BUCKET, 'ms')
-		// writeApi.useDefaultTags({
-		// 	location: hostname()
-		// })
-		// writeApi.writePoints(this.points)
-		// writeApi
-		// 	.close()
-		// 	.then(() => {
-		// 		this.points = []
-		// 	})
+		console.log(dbClient)
+		const writeApi = dbClient.getWriteApi(process.env.ORG, process.env.BUCKET, 'ms')
+		writeApi.useDefaultTags({
+			location: hostname()
+		})
+		console.log(this.points);
+		writeApi.writePoints(this.points)
+		writeApi
+			.close()
+			.then(() => {
+				console.log("wrote points");
+				this.points = []
+			})
+			.catch(e => {
+				console.log(e);
+			});
 	}
 
 	addReading(reading) {
@@ -153,9 +161,32 @@ const insertReading = function(topic, payload) {
 
 	var data = String(payload)
 
-	// const point = new Point(els[2])
-	// 	.tag('thing', thingName)
-	// 	.timestamp(time)
+	let point;
+
+	if (els[0] === 'bedtime') {
+		point = new Point(els[1])
+			.tag('thing', thingName)
+			.tag('moment', 'bedtime')
+			.timestamp(time)
+		point.stringField('value', payload)
+	} else if (els[0] === 'wakeup') {
+		point = new Point(els[1])
+			.tag('thing', thingName)
+			.tag('moment', 'wakeup')
+			.timestamp(time)
+		point.stringField('value', payload)
+	} else {
+		point = new Point(els[0])
+			.tag('thing', thingName)
+			.timestamp(time)
+		point.intField('value', parseInt(payload));
+	}
+	// console.log(point);
+
+	point.tag('thing', thingName);
+	point.timestamp(time);
+
+
 	// if ("tags" in data) {
 	// 	for (const [key, value] of Object.entries(data.tags)) {
 	// 		point.tag(key, value);
@@ -180,19 +211,19 @@ const insertReading = function(topic, payload) {
 	// // Create Reading
 	const reading = new Reading(time, topic, data);
 
-	var thing = things.find(thing => thing.name === "lamp")
+	var thing = things.find(thing => thing.name === thingName)
 	if (!thing) {
 		let date = dateString(new Date());
 		thing = new Thing({
-			path: path.resolve(directory, `lamp-${date}.csv`),
+			path: path.resolve(directory, `${thingName}-${date}.csv`),
 			// headers to write
 			headers: ['stream', 'timestamp', 'value'],
-			name: "lamp"
+			name: thingName
 		});
 		things.push(thing);
 	}
 	thing.addReading(reading);
-	// thing.addPoint(point);
+	thing.addPoint(point);
 }
 
 var dateString = function(date) {
@@ -220,3 +251,44 @@ var newFile = cron.schedule('0 0 * * *', () => {
 		thing.newFile();
 	}
 });
+
+// const {InfluxDB, Point, HttpError} = require('@influxdata/influxdb-client')
+// const dotenv = require('dotenv').config()
+// const {hostname} = require('os')
+//
+// console.log('*** WRITE POINTS ***')
+// const dbClient = new InfluxDB({
+// 	url: process.env.HOST,
+// 	token: process.env.TOKEN
+// })
+// const writeApi = dbClient.getWriteApi(process.env.ORG, process.env.BUCKET, 'ms');
+// // setup default tags for all writes through this API
+// writeApi.useDefaultTags({location: hostname()})
+//
+// // write point with the current (client-side) timestamp
+// const point1 = new Point('temperature')
+//   .tag('example', 'write.ts')
+//   .floatField('value', 20 + Math.round(100 * Math.random()) / 10)
+// writeApi.writePoint(point1)
+// console.log(` ${point1}`)
+// // write point with a custom timestamp
+// const point2 = new Point('temperature')
+//   .tag('example', 'write.ts')
+//   .floatField('value', 10 + Math.round(100 * Math.random()) / 10)
+//   .timestamp(new Date()) // can be also a number, but in writeApi's precision units (s, ms, us, ns)!
+// writeApi.writePoint(point2)
+// console.log(` ${point2.toLineProtocol(writeApi)}`)
+//
+// // flush pending writes and close writeApi
+// writeApi
+//   .close()
+//   .then(() => {
+//     console.log('FINISHED ... now try ./query.ts')
+//   })
+//   .catch(e => {
+//     console.error(e)
+//     if (e instanceof HttpError && e.statusCode === 401) {
+//       console.log('Run ./onboarding.js to setup a new InfluxDB database.')
+//     }
+//     console.log('\nFinished ERROR')
+//   })
