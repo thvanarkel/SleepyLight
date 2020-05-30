@@ -58,7 +58,7 @@ Config defaultConfig[NUM_CONFIGS] = {
   {"unwinddecay", "30"},
   {"slumberdecay", "30"},
   {"snooze", "8"},
-  {"currentsound", "5"},
+  {"currentsound", "3"},
   {"bedtimereminder", "30"}
 };
 
@@ -106,7 +106,7 @@ static Sound sounds[8] = {{"birdsong.wav", 61},
   {"sunny.wav", 60}
 };
 
-int currentSound = 5;
+int currentSound;
 unsigned long startedPlaying;
 
 SDConfigCommand sdcc;
@@ -115,6 +115,7 @@ SDWaveFile waveFile;
 unsigned long reminded;
 
 Orientation orientation;
+Orientation lOrientation;
 boolean didTurn;
 int nShakes;
 
@@ -152,15 +153,8 @@ void setup() {
   client.onMessage(messageReceived);
   connect();
 
-  // Initialise RTC
-  Wire.begin();
-  if (!rtc.begin()) {
-    client.publish("/error", "Couldn't find RTC");
-  }
-  if (rtc.lostPower()) {
-    client.publish("/error", "RTC lost power, let's set the time!");
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-  }
+  client.publish("/restart", "1");
+
 
   // Initialise SD card reader and I2S speaker
   if (!SD.begin()) {
@@ -172,8 +166,20 @@ void setup() {
   // check config
   loadConfig();
 
+  // Initialise RTC
+  Wire.begin();
+  if (!rtc.begin()) {
+    client.publish("/error", "Couldn't find RTC");
+  }
+  if (rtc.lostPower()) {
+    client.publish("/error", "RTC lost power, let's set the time!");
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+  }
+
+  setAlarm(getConfig("wakeupalarm"), true);
+  setAlarm(getConfig("bedtimealarm"), false);
+
   currentSound = getConfig("currentsound").toInt();
-  Serial.println(currentSound);
   waveFile = SDWaveFile(sounds[currentSound].filename);
   if (!waveFile) {
     client.publish("/error", "wave file invalid");
@@ -317,11 +323,13 @@ void loop() {
     client.publish("/state", String(currentState));
     lastState = currentState;
   }
+  if (orientation != lOrientation) {
+    client.publish("/orientation", String(orientation));
+    lOrientation = orientation;
+  }
 
   if (millis() - lastUpdate > 1000) {
     client.publish("/ledLevel", String(lamp.level));
-
-    //    client.publish("/orientation", String(orientation));
     lastUpdate = millis();
   }
 
@@ -349,7 +357,6 @@ void updateStateMachine() {
       if (detectTurn(orientation)) {
         lamp.orientation = orientation;
         lamp.turnOn(2000);
-        client.publish("/orientation", String(orientation));
         currentState = UNWINDING;
       }
 
@@ -364,7 +371,7 @@ void updateStateMachine() {
       }
       if (rtc.alarmFired(2)) {
         rtc.clearAlarm(2);
-        nextAlarm(false);
+        
         setSound(5);
         playSound();
         reminded = millis();
@@ -387,6 +394,7 @@ void updateStateMachine() {
         stopSound();
         currentSound = getConfig("currentsound").toInt();
         currentState = LIGHT_IDLE;
+        nextAlarm(false);
       }
       break;
 
@@ -432,7 +440,6 @@ void updateStateMachine() {
       if (detectTurn(orientation)) {
         stopSound();
         lamp.orientation = orientation;
-        client.publish("/orientation", String(orientation));
         lamp.turnOff(2000);
         nextAlarm(true);
         currentState = LIGHT_IDLE;
@@ -456,13 +463,11 @@ void updateStateMachine() {
       if (detectTurn(orientation)) {
         lamp.orientation = orientation;
         lamp.turnOn(2000);
-        client.publish("/orientation", String(orientation));
         currentState = UNWINDING;
       }
       break;
   }
 }
-
 
 String getValue(String data, char separator, int index)
 {
@@ -505,11 +510,11 @@ void setAlarm(String str, boolean wakeup) {
         int o = getConfig("awakeningtime").toInt();
         future = a - TimeSpan(0, 0, o, 0);
         rtc.setAlarm1(future, DS3231_A1_Hour);
-        publishDate("/wakeup/alarm/time", future);
+        publishDate("/wakeup/date", future);
       } else {
         future = a - TimeSpan(0, 0, getConfig("bedtimereminder").toInt(), 0);
         rtc.setAlarm2(future, DS3231_A2_Hour);
-        publishDate("/bedtime/alarm/time", future);
+        publishDate("/bedtime/date", future);
       }
     } else {
       nextAlarm(wakeup);
@@ -545,11 +550,11 @@ void nextAlarm(boolean wakeup)
       if (wakeup) {
         future = n - TimeSpan(0, 0, getConfig("awakeningtime").toInt(), 0);
         rtc.setAlarm1(future, DS3231_A1_Date);
-        publishDate("/wakeup/alarm/time", future);
+        publishDate("/wakeup/date", future);
       } else {
         future = n - TimeSpan(0, 0, getConfig("bedtimereminder").toInt(), 0);
         rtc.setAlarm2(future, DS3231_A2_Date);
-        publishDate("/bedtime/alarm/time", future);
+        publishDate("/bedtime/date", future);
       }
     }
     if (i > 7) {

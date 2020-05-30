@@ -29,7 +29,7 @@ export default function PageHome() {
   const [time, setTime] = useStateWithLocalStorage('wakeAlarm');
   const [awake,setAwake] = useStateWithLocalStorage('awakeTime', 30);
   const [snooze,setSnooze] = useStateWithLocalStorage('snooze', 8);
-  const [sound, setSound] = useStateWithLocalStorage('sound', 2);
+  const [sound, setSound] = useStateWithLocalStorage('sound', 3);
   // const [days, setDays] = React.useState();
 
   const [days, setDays] = useLocallyPersistedReducer(((state, newState) => ({ ...state, ...newState })),({
